@@ -1,8 +1,10 @@
+from enum import Enum
 from dotenv import load_dotenv
 import os
 import requests
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage, ChatMessage
+from langchain_community.callbacks import get_openai_callback
 
 
 # Load environment variables
@@ -11,6 +13,23 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 # Setup for LangChain
 chat_gpt = ChatOpenAI(temperature=0, api_key=OPENAI_API_KEY)
+
+
+# List to store cost information
+class RequestType(Enum):
+    GPT = 'GPT'
+    FREE = 'FREE'
+
+
+cost_info = []
+
+
+# Function to calculate cost based on number of tokens
+def calculate_cost(request_type=RequestType.GPT, tokens=0, cost=0):
+    if request_type == RequestType.GPT:
+        return {"tokens": tokens, "price": round(cost, 4)}
+    elif request_type == RequestType.FREE:
+        return {"tokens": 0, "price": 0}
 
 
 # Adjust to bypass errors and add the error message to the next step
@@ -25,6 +44,7 @@ def initial_fact_checking(claim):
     try:
         response = requests.get(api_url, headers=headers)
         if response.status_code == 200:
+            cost_info.append(calculate_cost(RequestType.FREE))
             return response.json()
         else:
             return {"error": "Failed to fetch fact-checking data", "status_code": response.status_code}
@@ -59,12 +79,17 @@ def deep_analysis_with_gpt4_langchain(claim, previous_step_result):
         f"A preliminary fact-check was done with this result: {previous_step_result}")
 
     # Use the chat model to generate a response based on the conversation history
-    response = chat_gpt.invoke(messages, max_tokens=250)
-    print('chatgpt4')
-    print(response)
+    with get_openai_callback() as cb:
+        response = chat_gpt.invoke(messages, max_tokens=200)
+        print('chatgpt4')
+        print(response)
+
+    # Calculate cost
+    cost_info.append(calculate_cost(
+        RequestType.GPT, cb.total_tokens, cb.total_cost))
 
     # Extracting and returning the generated text from the response
-    return response[-1]['content'] if response else "No response generated."
+    return response.content if response else "No response generated."
 
 
 def process_fact_check_request(message):
@@ -103,3 +128,4 @@ if __name__ == "__main__":
     dummy_message = "olives make you fat"
     result = process_fact_check_request(dummy_message)
     print("Process Result:", result)
+    print("Cost Info:", cost_info)
