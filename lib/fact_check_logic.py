@@ -1,12 +1,10 @@
-"""Main Function"""
+"""Main fact check logic"""
 import requests
-from lib import utils, perplexity
-
-# List to store cost information
-cost_info = []
+from . import utils
+from . import perplexity
 
 
-def initial_fact_checking(claim):
+def initial_fact_checking(claim, cost_info):
     """
     Fact-checking by querying an external API.
     """
@@ -25,20 +23,14 @@ def initial_fact_checking(claim):
         return f"Exception occurred on initial fact-checking: {e}"
 
 
-def process_fact_check_request(message):
+def process_fact_check_request(message, cost_info):
     """
     Process a fact-check request through initial fact-checking and deep analysis.
     """
-    # Placeholder for Transcription of Images or Audio
-    # TODO: Integrate media transcription services here
+    # Step 1: Initial Fact-Checking with Datasets/APIs
+    fact_check_result = initial_fact_checking(message, cost_info)
 
-    # Placeholder for Language Translation
-    # TODO: Detect language and translate if necessary
-
-    # Step 3: Initial Fact-Checking with Datasets/APIs
-    fact_check_result = initial_fact_checking(message)
-
-    # Step 4: Advanced Analysis
+    # Step 2: Advanced Analysis
     # deep_analysis_result_gpt = gpt.deep_analysis_with_gpt4_langchain(
     #     message, fact_check_result, cost_info)
     deep_analysis_result_perplexity = perplexity.deep_analysis_with_perplexity(
@@ -50,12 +42,5 @@ def process_fact_check_request(message):
     # Output results
     return {
         "initial_fact_check_result": fact_check_result,
-        "deep_analysis_result_perplexity": deep_analysis_result_perplexity,
+        "deep_analysis": deep_analysis_result_perplexity,
     }
-
-
-if __name__ == "__main__":
-    DUMMY_MESSAGE = "olives make you fat"
-    result = process_fact_check_request(DUMMY_MESSAGE)
-    print("Process Result:", result)
-    print("Cost Info:", cost_info)

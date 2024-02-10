@@ -20,6 +20,7 @@ A preliminary fact-check was done with this result: '''
 
 
 def clean_and_convert_to_json(input_str):
+    """Function to convert string into json"""
     # Attempt to clean the input string
     # Remove any trailing characters that are not part of the JSON object
     cleaned_str = re.sub(r'\}\'.*$', '}', input_str.strip())
@@ -38,6 +39,7 @@ def clean_and_convert_to_json(input_str):
 
 
 def json_to_formatted_string(json_data):
+    """Function to convert a json with 'truthfulness', 'explanation' and 'links' keys into a formatted string"""
     # Define the keys in order and how to format them
     key_order_and_format = [
         ("truthfulness", "{} \n"),
