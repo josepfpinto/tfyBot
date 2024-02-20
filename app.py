@@ -63,6 +63,7 @@ def messages():
         response = fact_check_logic.process_fact_check_request(
             message, cost_info)
         print(response)
+        print(cost_info)
         aws.save_in_db(text, number, message_id, media_id, timestamp, response)
         whatsapp.send_message(response.deep_analysis)
 

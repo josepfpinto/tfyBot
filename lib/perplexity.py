@@ -52,9 +52,10 @@ def deep_analysis_with_perplexity(claim, previous_step_result, cost_info):
             ),
         }
     ]
-    response = perplexity_request(messages, cost_info)
+    response = perplexity_request(
+        messages, cost_info, max_tokens=utils.get_dynamic_max_tokens(claim))
     try:
-        return utils.json_to_formatted_string(utils.clean_and_convert_to_json(response))
+        return utils.clean_and_convert_to_json(response)
     except Exception as e:
         print(e)
         return "Failed to parse response from perplexity."

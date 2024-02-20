@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.callbacks import get_openai_callback
+from langchain.agents import AgentType, initialize_agent, load_tools
 from . import utils
 
 # Load environment variables
@@ -33,6 +34,26 @@ def gpt4_request(messages, cost_info, max_tokens=200):
         return "No response generated from ChatGPT."
 
 
+def gpt4_request_alternative(previous_result_str, claim):
+    """Function to make requests to gpt4"""
+    # Setup for LangChain
+    llm = ChatOpenAI(temperature=0)
+    tools = load_tools(["serpapi"], llm=llm)
+    agent_chain = initialize_agent(
+        tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True
+    )
+
+    # Use the chat model to generate a response based on the conversation history
+    response = agent_chain.run(f"{utils.URL_INSTRUCTION}{
+                               previous_result_str}. Original Claim: {claim}")
+    print(response)
+
+    try:
+        return response
+    except (AttributeError, IndexError, TypeError):
+        return "No response generated from ChatGPT."
+
+
 def deep_analysis_with_gpt4_langchain(claim, previous_step_result, cost_info):
     """
     Perform deep analysis on a claim using LangChain with an OpenAI model, considering previous steps' output.
@@ -47,4 +68,21 @@ def deep_analysis_with_gpt4_langchain(claim, previous_step_result, cost_info):
             content=claim
         ),
     ]
-    return gpt4_request(messages, cost_info)
+    return gpt4_request_alternative(previous_result_str, claim)
+    # return gpt4_request(messages, cost_info, max_tokens=utils.get_dynamic_max_tokens(claim))
+
+
+def get_urls_with_gpt4_langchain(claim, previous_step_result, cost_info):
+    """
+    Get related URLs by reviewing and adjusting the assessment of a user's claim.
+    """
+    previous_result_str = str(previous_step_result)
+    messages = [
+        SystemMessage(
+            content=f"{utils.URL_INSTRUCTION}{previous_result_str}"
+        ),
+        HumanMessage(
+            content=claim
+        ),
+    ]
+    return utils.clean_and_convert_to_json(gpt4_request(messages, cost_info, max_tokens=utils.get_dynamic_max_tokens(claim)))

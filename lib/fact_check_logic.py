@@ -1,5 +1,8 @@
 """Main fact check logic"""
+import json
 import requests
+
+from . import gpt
 from . import utils
 from . import perplexity
 
@@ -36,11 +39,15 @@ def process_fact_check_request(message, cost_info):
     deep_analysis_result_perplexity = perplexity.deep_analysis_with_perplexity(
         message, fact_check_result, cost_info)
 
+    # Step 4: Fetch Related Links
     # Placeholder for Fetching Related News Articles or Official Reports
-    # TODO: Integrate news API to fetch related articles
+    # TODO: Integrate more specialized news API to fetch related articles
+    deep_analysis_result_gpt = gpt.get_urls_with_gpt4_langchain(
+        message,  json.dumps(deep_analysis_result_perplexity), cost_info)
 
     # Output results
     return {
         "initial_fact_check_result": fact_check_result,
-        "deep_analysis": deep_analysis_result_perplexity,
+        "deep_analysis": utils.json_to_formatted_string(deep_analysis_result_perplexity),
+        "analysis_review": utils.json_to_formatted_string(deep_analysis_result_gpt),
     }

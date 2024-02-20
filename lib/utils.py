@@ -14,9 +14,16 @@ class RequestType:
     PERPLEXITY = 'PERPLEXITY'
 
 
-INSTRUCTION = '''Analyse the content of the user claim and provide an assessment of its truthfulness in simple and plain language, indicating the probability of being true or false and the reasoning behind this assessment, together with verified existing links that support this assessment.
-Format of the response should be a json (ready to be converted by json.loads) with these keys: {truthfulness: <FALSE || PROBABLY FALSE || PROBABLY TRUE || TRUE >, explanation: <explanation in simple and plain language>, links: <list of verified evidence links that exist at current date - if no links exist or cannot be verified, send an empty list>}
+JSON_KEYS = '''{truthfulness: <FALSE | PROBABLY FALSE | PROBABLY TRUE | TRUE>, explanation: <Clear, plain language explanation>, links: <List of current, verified evidence links or an empty list if none apply>}'''
+
+INSTRUCTION = f'''Analyse the content of the user claim and provide an assessment of its truthfulness in simple and plain language, indicating the probability of being true or false and the reasoning behind this assessment, together with verified existing links that support this assessment. If no suitable links are available or the existing ones cannot be verified, provide an empty list.
+Format of the response should be a json (ready to be converted by json.loads) with these keys: {JSON_KEYS}
 A preliminary fact-check was done with this result: '''
+
+URL_INSTRUCTION = f'''Please review the provided assessment regarding the truthfulness of a user's claim. Adjust the assessment if necessary, ensuring accuracy and objectivity. Verify the functionality and relevance of the supplied links, replacing them with current, verified evidence links when appropriate. If no suitable links are available or the existing ones cannot be verified, provide an empty list.
+Format the response as a JSON object with these keys: {JSON_KEYS}
+Previous fact-check (in the same JSON format):
+'''
 
 
 def clean_and_convert_to_json(input_str):
@@ -65,7 +72,7 @@ def json_to_formatted_string(json_data):
 def calculate_cost(request_type=RequestType.GPT, tokens=0, cost=0, prompt_tokens=0, completion_tokens=0):
     """Function to calculate cost based on number of tokens"""
     if request_type == RequestType.GPT:
-        return {"tokens": tokens, "price": round(cost, 4)}
+        return {"type": request_type, "tokens": tokens, "price": round(cost, 4)}
 
     if request_type == RequestType.PERPLEXITY:
         # Pricing details
@@ -76,7 +83,12 @@ def calculate_cost(request_type=RequestType.GPT, tokens=0, cost=0, prompt_tokens
             price_per_million_input_tokens
         output_cost = (completion_tokens / 1_000_000) * \
             price_per_million_output_tokens
-        return {"tokens": tokens, "price": round(input_cost + output_cost, 4)}
+        return {"type": request_type, "tokens": tokens, "price": round(input_cost + output_cost, 4)}
 
     if request_type == RequestType.FREE:
-        return {"tokens": 0, "price": 0}
+        return {"type": request_type, "tokens": 0, "price": 0}
+
+
+def get_dynamic_max_tokens(claim):
+    """Function to calculate max tokens based on claim length"""
+    return 200 + len(claim) // 20
