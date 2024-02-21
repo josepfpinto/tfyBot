@@ -16,5 +16,5 @@ def is_repeted_message(message_id):
 
 def save_in_db(text, number, message_id, media_id, timestamp, response):
     """ Function that saves data into messages, users and costs tables """
-    # TODO: save message, user and costs
+    # TODO: save message, user and costs - MESSAGES (id, phone number, threadId, message, cost)
     return

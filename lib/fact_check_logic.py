@@ -26,23 +26,25 @@ def initial_fact_checking(claim, cost_info):
         return f"Exception occurred on initial fact-checking: {e}"
 
 
-def process_fact_check_request(message, cost_info):
+def fact_check(message, cost_info):
     """
     Process a fact-check request through initial fact-checking and deep analysis.
     """
-    # Step 1: Initial Fact-Checking with Datasets/APIs
+    # Step 6: Initial Fact-Checking with Datasets/APIs
+    # TODO: improve focusing on wikipedia AND https://toolbox.google.com/factcheck/apis
     fact_check_result = initial_fact_checking(message, cost_info)
 
-    # Step 2: Advanced Analysis
-    # deep_analysis_result_gpt = gpt.deep_analysis_with_gpt4_langchain(
-    #     message, fact_check_result, cost_info)
+    # Step 7A: Advanced Analysis with Originality AI to make main analysis
+    # TODO: implement https://originality.ai/ | https://docs.originality.ai/introduction
+
+    # Step 7B: Advanced Analysis with Perplexity API OR local LLM to make main analysis and get URLs
     deep_analysis_result_perplexity = perplexity.deep_analysis_with_perplexity(
         message, fact_check_result, cost_info)
 
-    # Step 4: Fetch Related Links
-    # Placeholder for Fetching Related News Articles or Official Reports
-    # TODO: Integrate more specialized news API to fetch related articles
-    deep_analysis_result_gpt = gpt.get_urls_with_gpt4_langchain(
+    # Step 8: Review analysis
+    # TODO: Improve implementation with GPT-4 OR local LLM to confirm answer and provide a nuanced perspective
+    # TODO: Include the request to assure the answer has no more than xxx char
+    deep_analysis_result_gpt = gpt.review_previous_analysis_with_gpt4_langchain(
         message,  json.dumps(deep_analysis_result_perplexity), cost_info)
 
     # Output results

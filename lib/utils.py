@@ -16,12 +16,12 @@ class RequestType:
 
 JSON_KEYS = '''{truthfulness: <FALSE | PROBABLY FALSE | PROBABLY TRUE | TRUE>, explanation: <Clear, plain language explanation>, links: <List of current, verified evidence links or an empty list if none apply>}'''
 
-INSTRUCTION = f'''Analyse the content of the user claim and provide an assessment of its truthfulness in simple and plain language, indicating the probability of being true or false and the reasoning behind this assessment, together with verified existing links that support this assessment. If no suitable links are available or the existing ones cannot be verified, provide an empty list.
+ANALYSE_USER_MESSAGE = f'''Analyse the content of the user claim and provide an assessment of its truthfulness in simple and plain language, indicating the probability of being true or false and the reasoning behind this assessment, together with verified existing links that support this assessment. If no suitable links are available or the existing ones cannot be verified, provide an empty list.
 Format of the response should be a json (ready to be converted by json.loads) with these keys: {JSON_KEYS}
 A preliminary fact-check was done with this result: '''
 
-URL_INSTRUCTION = f'''Please review the provided assessment regarding the truthfulness of a user's claim. Adjust the assessment if necessary, ensuring accuracy and objectivity. Verify the functionality and relevance of the supplied links, replacing them with current, verified evidence links when appropriate. If no suitable links are available or the existing ones cannot be verified, provide an empty list.
-Format the response as a JSON object with these keys: {JSON_KEYS}
+REVIEW_ANALYSIS_INSTRUCTION = f'''Please review the provided assessment regarding the truthfulness of a user's claim. Adjust the assessment if necessary, ensuring accuracy and objectivity. Verify the functionality and relevance of the supplied links list, removing any link that is not available or not relevant, providing an empty list.
+Format of the response should be a json (ready to be converted by json.loads) with these keys: {JSON_KEYS}
 Previous fact-check (in the same JSON format):
 '''
 

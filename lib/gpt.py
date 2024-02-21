@@ -15,14 +15,15 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 def gpt4_request(messages, cost_info, max_tokens=200):
     """Function to make requests to gpt4"""
     # Setup for LangChain
-    chat_gpt = ChatOpenAI(temperature=0, api_key=OPENAI_API_KEY)
+    llm = ChatOpenAI(
+        temperature=0, api_key=OPENAI_API_KEY, model_name="gpt-3.5-turbo")
 
     # If leveraging dialogue over several turns, you might update the context here
     # chat_gpt.update_context(...) # This method might vary depending on LangChain's future updates
 
     # Use the chat model to generate a response based on the conversation history
     with get_openai_callback() as cb:
-        response = chat_gpt.invoke(messages, max_tokens=max_tokens)
+        response = llm.invoke(messages, max_tokens=max_tokens)
 
     try:
         # Calculate cost
@@ -34,17 +35,17 @@ def gpt4_request(messages, cost_info, max_tokens=200):
         return "No response generated from ChatGPT."
 
 
-def gpt4_request_alternative(previous_result_str, claim):
+def gpt4_request_with_web_search(previous_result_str, claim):
     """Function to make requests to gpt4"""
     # Setup for LangChain
-    llm = ChatOpenAI(temperature=0)
+    llm = ChatOpenAI(temperature=0, api_key=OPENAI_API_KEY, model_name="gpt-4")
     tools = load_tools(["serpapi"], llm=llm)
     agent_chain = initialize_agent(
         tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True
     )
 
     # Use the chat model to generate a response based on the conversation history
-    response = agent_chain.run(f"{utils.URL_INSTRUCTION}{
+    response = agent_chain.run(f"{utils.REVIEW_ANALYSIS_INSTRUCTION} {
                                previous_result_str}. Original Claim: {claim}")
     print(response)
 
@@ -54,6 +55,7 @@ def gpt4_request_alternative(previous_result_str, claim):
         return "No response generated from ChatGPT."
 
 
+# old
 def deep_analysis_with_gpt4_langchain(claim, previous_step_result, cost_info):
     """
     Perform deep analysis on a claim using LangChain with an OpenAI model, considering previous steps' output.
@@ -62,27 +64,27 @@ def deep_analysis_with_gpt4_langchain(claim, previous_step_result, cost_info):
     previous_result_str = str(previous_step_result)
     messages = [
         SystemMessage(
-            content=f"{utils.INSTRUCTION}{previous_result_str}"
+            content=f"{utils.ANALYSE_USER_MESSAGE} {previous_result_str}"
         ),
         HumanMessage(
             content=claim
         ),
     ]
-    return gpt4_request_alternative(previous_result_str, claim)
-    # return gpt4_request(messages, cost_info, max_tokens=utils.get_dynamic_max_tokens(claim))
+    return utils.clean_and_convert_to_json(gpt4_request(messages, cost_info, max_tokens=utils.get_dynamic_max_tokens(claim)))
 
 
-def get_urls_with_gpt4_langchain(claim, previous_step_result, cost_info):
+def review_previous_analysis_with_gpt4_langchain(claim, previous_step_result, cost_info):
     """
-    Get related URLs by reviewing and adjusting the assessment of a user's claim.
+    Review the previous analysis of a claim using LangChain with an OpenAI model.
     """
     previous_result_str = str(previous_step_result)
     messages = [
         SystemMessage(
-            content=f"{utils.URL_INSTRUCTION}{previous_result_str}"
+            content=f"{utils.REVIEW_ANALYSIS_INSTRUCTION}{previous_result_str}"
         ),
         HumanMessage(
             content=claim
         ),
     ]
+    # return utils.clean_and_convert_to_json(gpt4_request_with_web_search(previous_result_str, claim))
     return utils.clean_and_convert_to_json(gpt4_request(messages, cost_info, max_tokens=utils.get_dynamic_max_tokens(claim)))
