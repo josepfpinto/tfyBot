@@ -1,9 +1,8 @@
-from lib.fact_check_logic import fact_check
+from lib.gpt import translate_with_gpt4_langchain
 
 cost_info = []
-DUMMY_MESSAGE = "olives make you fat"
+DUMMY_MESSAGE = "Eu chamo-me José"
 
-response = fact_check(
-    DUMMY_MESSAGE, cost_info)
-print(response)
+message = translate_with_gpt4_langchain(DUMMY_MESSAGE, cost_info)
+print(message)
 print(cost_info)

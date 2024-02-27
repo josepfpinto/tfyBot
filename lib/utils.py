@@ -14,6 +14,11 @@ class RequestType:
     PERPLEXITY = 'PERPLEXITY'
 
 
+TRANSLATE_JSON_KEYS = '''{translated_message: <Only the translated message in english>, original_language: <original langugage of the user message>}'''
+
+TRANSLATE = f'''Translate the user message to english and identify the original language. Format of the response should be a json (ready to be converted by json.loads) with these keys: {
+    TRANSLATE_JSON_KEYS} '''
+
 JSON_KEYS = '''{truthfulness: <FALSE | PROBABLY FALSE | PROBABLY TRUE | TRUE>, explanation: <Clear, plain language explanation>, links: <List of current, verified evidence links or an empty list if none apply>}'''
 
 ANALYSE_USER_MESSAGE = f'''Analyse the content of the user claim and provide an assessment of its truthfulness in simple and plain language, indicating the probability of being true or false and the reasoning behind this assessment, together with verified existing links that support this assessment. If no suitable links are available or the existing ones cannot be verified, provide an empty list.

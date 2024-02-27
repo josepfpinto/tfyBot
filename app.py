@@ -1,6 +1,6 @@
 """Main Function"""
 import os
-from lib import whatsapp, aws, fact_check_logic
+from lib import whatsapp, aws, fact_check_logic, gpt
 from flask import Flask, request
 from dotenv import load_dotenv
 
@@ -49,7 +49,7 @@ def messages():
         number = message['from']
         message_id = message['id']
         timestamp = int(message['timestamp'])
-        text, media_id = whatsapp.get_message(message)
+        final_message, media_id = whatsapp.get_message(message)
 
         if aws.is_repeted_message(message_id):  # TODO
             return 'repeated message'
@@ -65,8 +65,8 @@ def messages():
         # Output: Transcribed text ready for further processing.
 
         # Placeholder Step 3: Language Translation
-        # TODO: Detect language and translate if necessary to english
-        # Output: Text in English ready for fact-checking
+        translated_message = gpt.translate_with_gpt4_langchain(
+            final_message, cost_info)
 
         # Placeholder Step 4: Confirm the type of LLM to be used, having into account the type of skills needed to answer (eg. websearch and text comprehension VS math)
 
@@ -76,12 +76,13 @@ def messages():
 
         # Step 6 / 7 / 8: Fact-Checking
         response = fact_check_logic.fact_check(
-            message, cost_info)
+            translated_message['translated_message'], cost_info)
         print(response)
         print(cost_info)
 
         # Placeholder Step 9: Save data in DynamoDB Table:
-        aws.save_in_db(text, number, message_id, media_id, timestamp, response)
+        aws.save_in_db(translated_message['translated_message'],
+                       number, message_id, media_id, timestamp, response)
         whatsapp.send_message(response.deep_analysis)
 
         return 'enviado'

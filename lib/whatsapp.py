@@ -13,13 +13,13 @@ def get_message(message):
     """parse Whatsapp message"""
     media_id = ''
     text = 'Message not recognized'
-    typeMessage = message.get('type', '')
+    type_message = message.get('type', '')
 
-    if typeMessage == 'text':
+    if type_message == 'text':
         text = message['text']['body']
-    elif typeMessage == 'document':
-        media_id = message[typeMessage]['id']
-        text = message[typeMessage].get('filename', '')
+    elif type_message == 'document':
+        media_id = message[type_message]['id']
+        text = message[type_message].get('filename', '')
     else:
         text = 'Message not processed'
     return text, media_id

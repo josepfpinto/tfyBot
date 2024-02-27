@@ -88,3 +88,19 @@ def review_previous_analysis_with_gpt4_langchain(claim, previous_step_result, co
     ]
     # return utils.clean_and_convert_to_json(gpt4_request_with_web_search(previous_result_str, claim))
     return utils.clean_and_convert_to_json(gpt4_request(messages, cost_info, max_tokens=utils.get_dynamic_max_tokens(claim)))
+
+
+def translate_with_gpt4_langchain(claim, cost_info):
+    """
+    Translate a claim using LangChain with an OpenAI model. Output: {translated_message: string, original_language: string}
+    """
+    messages = [
+        SystemMessage(
+            content=f"{utils.TRANSLATE}"
+        ),
+        HumanMessage(
+            content=claim
+        ),
+    ]
+    # return utils.clean_and_convert_to_json(gpt4_request_with_web_search(previous_result_str, claim))
+    return utils.clean_and_convert_to_json(gpt4_request(messages, cost_info, max_tokens=utils.get_dynamic_max_tokens(claim)))
