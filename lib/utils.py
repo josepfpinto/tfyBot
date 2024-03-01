@@ -1,6 +1,8 @@
 """Useful classes and functions"""
+import logging
 import json
 import re
+from flask import jsonify
 
 
 class RequestType:
@@ -46,7 +48,7 @@ def clean_and_convert_to_json(input_str):
 
         return cleaned_data
     except json.JSONDecodeError as e:
-        print(f"Error decoding JSON: {e}")
+        logging.error("Error decoding JSON: %s", e)
         return {}
 
 
@@ -97,3 +99,9 @@ def calculate_cost(request_type=RequestType.GPT, tokens=0, cost=0, prompt_tokens
 def get_dynamic_max_tokens(claim):
     """Function to calculate max tokens based on claim length"""
     return 200 + len(claim) // 20
+
+
+def create_api_response(status, message):
+    """Function to create API response - {status: string, message: string}, status: int"""
+    statusString = "ok" if status == 200 else "error"
+    return jsonify({"status": statusString, "message": message}), status

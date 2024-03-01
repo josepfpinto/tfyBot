@@ -1,95 +1,85 @@
 """Main Function"""
 import os
-from lib import whatsapp, aws, fact_check_logic, gpt
+import logging
+import json
+from lib import main_logic, whatsapp, utils
 from flask import Flask, request
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 TOKEN = os.getenv('TOKEN')
+WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
 
 # Load Flask
 app = Flask(__name__)
-
-# List to store cost information
-cost_info = []
-DUMMY_MESSAGE = "olives make you fat"
 
 
 @app.route('/welcome', methods=['GET'])
 def welcome():
     """ API welcome resolver """
-    return 'Hello World! Welcome to Think for Yourslf Bot.'
-
-
-@app.route('/webhook', methods=['GET'])
-def check_token():
-    """ token confirmation resolver """
-    try:
-        token = request.args.get('hub.verify_token')
-        challenge = request.args.get('hub.challenge')
-
-        if token == TOKEN and challenge is not None:
-            return challenge
-        else:
-            return 'incorrect token', 403
-    except Exception as e:
-        return e, 403
+    return utils.create_api_response(200, 'Hello World! Welcome to Think for Yourslf Bot.')
 
 
 @app.route('/webhook', methods=['POST'])
 def messages():
-    """ main resolver """
+    """
+    This resolver handles incoming webhook events from the WhatsApp API.
+
+    This function processes incoming WhatsApp messages and other events,
+    such as delivery statuses. If the event is a valid message, it gets
+    processed. If the incoming payload is not a recognized WhatsApp event,
+    an error is returned.
+
+    Every message send will trigger 4 HTTP requests to your webhook: message, sent, delivered, read.
+
+    Returns:
+        response: A tuple containing a JSON response and an HTTP status code.
+    """
+
+    body = request.get_json()
+
+    # Check if it's a WhatsApp status update
+    if (body.get("entry", [{}])[0].get("changes", [{}])[0].get("value", {}).get("statuses")):
+        logging.info("Received a WhatsApp status update.")
+        return utils.create_api_response(200, '')
+
     try:
-        body = request.get_json()
-        entry = body['entry'][0]
-        changes = entry['changes'][0]
-        value = changes['value']
-        message = value['messages'][0]
-        number = message['from']
-        message_id = message['id']
-        timestamp = int(message['timestamp'])
-        final_message, media_id = whatsapp.get_message(message)
+        if whatsapp.is_valid_whatsapp_message(body):
+            return main_logic.process_message(body)
+        else:
+            # if the request is not a WhatsApp API event, return an error
+            return utils.create_api_response(404, 'Not a WhatsApp API event')
+    except json.JSONDecodeError:
+        logging.error("Failed to decode JSON")
+        return utils.create_api_response(400, 'Invalid JSON provided')
 
-        if aws.is_repeted_message(message_id):  # TODO
-            return 'repeated message'
 
-        # Placeholder Step 1: Confirm what type of message it is:
-        # TODO: 1.1 New number (confirm against dynamoDB)
-        # TODO: 1.2 Confirm if it is the definition of preferred language (by keyword?) OR Request for institutional info (by keyword?) OR Continuation of previous conversation VS New factcheck request (depending if it is a new number or not and comparing to the time of previous messages - if it is more than 10min apart consider to be a new message).
-        # TODO: 1.3 In case it can be the continuation of the conversation, use LLM to confirm which case.
-
-        # Placeholder Step 2: Transcription of Images or Audio
-        # TODO: Check for Media Type: Detect if the input is an image or audio file.
-        # TODO: Transcription Service: Use a transcription API (from AWS?) to convert media to text.
-        # Output: Transcribed text ready for further processing.
-
-        # Placeholder Step 3: Language Translation
-        translated_message = gpt.translate_with_gpt4_langchain(
-            final_message, cost_info)
-
-        # Placeholder Step 4: Confirm the type of LLM to be used, having into account the type of skills needed to answer (eg. websearch and text comprehension VS math)
-
-        # Placeholder Step 5: Save data in DynamoDB Table:
-        # TODO: 5.1 USERS (phone number, language) - if number still doesn't exist there
-        # TODO: 5.2 MESSAGES (id, phone number, threadId, message, cost)
-
-        # Step 6 / 7 / 8: Fact-Checking
-        response = fact_check_logic.fact_check(
-            translated_message['translated_message'], cost_info)
-        print(response)
-        print(cost_info)
-
-        # Placeholder Step 9: Save data in DynamoDB Table:
-        aws.save_in_db(translated_message['translated_message'],
-                       number, message_id, media_id, timestamp, response)
-        whatsapp.send_message(response.deep_analysis)
-
-        return 'enviado'
-
-    except Exception as e:
-        return 'no enviado ' + str(e)
+@app.route('/webhook', methods=['GET'])
+def webhook_get():
+    """ token confirmation resolver """
+    # Parse params from the webhook verification request
+    mode = request.args.get("hub.mode")
+    token = request.args.get("hub.verify_token")
+    challenge = request.args.get("hub.challenge")
+    # Check if a token and mode were sent
+    if mode and token:
+        # Check the mode and token sent are correct
+        if mode == "subscribe" and token == WHATSAPP_VERIFY_TOKEN:
+            # Respond with 200 OK and challenge token from the request
+            logging.info("WEBHOOK_VERIFIED")
+            return challenge, 200
+        else:
+            # Responds with '403 Forbidden' if verify tokens do not match
+            logging.info("VERIFICATION_FAILED")
+            return utils.create_api_response(403, "Verification failed")
+    else:
+        # Responds with '400 Bad Request' if verify tokens do not match
+        logging.info("MISSING_PARAMETER")
+        return utils.create_api_response(400, "Missing parameters")
 
 
 if __name__ == '__main__':
-    app.run()
+    logging.info("Flask app started")
+    app.run(host="0.0.0.0", port=8000)
+    # app.run()

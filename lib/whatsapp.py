@@ -1,8 +1,11 @@
 """Whatsapp related functions"""
+import logging
 import json
 import os
+import re
 from dotenv import load_dotenv
 import requests
+from . import utils
 
 # Load environment variables
 load_dotenv()
@@ -41,6 +44,38 @@ headers = {'Content-Type': 'application/json',
            'Authorization': 'Bearer ' + WHATSAPP_TOKEN}
 
 
+def process_text_for_whatsapp(text):
+    # Remove brackets
+    pattern = r"\【.*?\】"
+    # Substitute the pattern with an empty string
+    text = re.sub(pattern, "", text).strip()
+
+    # Pattern to find double asterisks including the word(s) in between
+    pattern = r"\*\*(.*?)\*\*"
+
+    # Replacement pattern with single asterisks
+    replacement = r"*\1*"
+
+    # Substitute occurrences of the pattern with the replacement
+    whatsapp_style_text = re.sub(pattern, replacement, text)
+
+    return whatsapp_style_text
+
+
+def is_valid_whatsapp_message(body):
+    """
+    Check if the incoming webhook event has a valid WhatsApp message structure.
+    """
+    return (
+        body.get("object")
+        and body.get("entry")
+        and body["entry"][0].get("changes")
+        and body["entry"][0]["changes"][0].get("value")
+        and body["entry"][0]["changes"][0]["value"].get("messages")
+        and body["entry"][0]["changes"][0]["value"]["messages"][0]
+    )
+
+
 def get_message(message):
     """parse Whatsapp message"""
     media_id = ''
@@ -66,7 +101,7 @@ def send_template_message(recipient, template="hello_world"):
             "type": "template",
             "template": {"name": template, "language": {"code": "en_US"}},
         }
-        print("sending... ", data, whatsapp_url)
+        logging.info("sending... %s to %s", data, whatsapp_url)
         data_json = json.dumps(data)
         response = requests.post(whatsapp_url,
                                  headers=headers,
@@ -74,9 +109,9 @@ def send_template_message(recipient, template="hello_world"):
                                  timeout=20)
 
         if response.status_code == 200:
-            return 'message sent', 200
+            return utils.create_api_response(200, 'message sent')
         else:
-            return 'error while sending message', response.json()
+            return utils.create_api_response(400, response.text)
     except Exception as e:
         return e, 403
 
@@ -84,24 +119,22 @@ def send_template_message(recipient, template="hello_world"):
 def send_message(recipient, data):
     """send message to Whatsapp"""
     try:
-        data = json.dumps(
+        final_data = json.dumps(
             {
                 "messaging_product": "whatsapp",
                 "recipient_type": "individual",
                 "to": recipient,
                 "type": "text",
-                "text": {"preview_url": False, "body": data},
+                "text": {"preview_url": False, "body": process_text_for_whatsapp(data)},
             }
         )
-        print("sending... ", data)
+        logging.info("sending...  %s",  final_data)
         response = requests.post(whatsapp_url,
                                  headers=headers,
-                                 data=data,
+                                 data=final_data,
                                  timeout=20)
 
-        if response.status_code == 200:
-            return 'message sent', 200
-        else:
-            return 'error while sending message', response.status_code
+        return utils.create_api_response(response.status_code, 'message sent' if response.status_code == 200 else response.text)
+
     except Exception as e:
         return e, 403

@@ -1,4 +1,5 @@
 """Perplexity related functions"""
+import logging
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -45,7 +46,7 @@ def perplexity_request_with_web_search(previous_result_str, claim):
     # Use the chat model to generate a response based on the conversation history
     response = agent_chain.run(f"{utils.ANALYSE_USER_MESSAGE} {
                                previous_result_str}. Original Claim: {claim}")
-    print(response)
+    logging.info(response)
 
     try:
         return response
@@ -80,5 +81,5 @@ def deep_analysis_with_perplexity(claim, previous_step_result, cost_info):
     try:
         return utils.clean_and_convert_to_json(response)
     except Exception as e:
-        print(e)
+        logging.error(str(e))
         return "Failed to parse response from perplexity."

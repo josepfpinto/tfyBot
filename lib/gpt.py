@@ -1,5 +1,6 @@
 """GPT related functions"""
 import os
+import logging
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
@@ -47,7 +48,7 @@ def gpt4_request_with_web_search(previous_result_str, claim):
     # Use the chat model to generate a response based on the conversation history
     response = agent_chain.run(f"{utils.REVIEW_ANALYSIS_INSTRUCTION} {
                                previous_result_str}. Original Claim: {claim}")
-    print(response)
+    logging.info(response)
 
     try:
         return response
