@@ -3,21 +3,27 @@ import logging
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+from langchain.utilities.tavily_search import TavilySearchAPIWrapper
+from langchain.tools.tavily_search import TavilySearchResults
+from langchain.agents import AgentType, initialize_agent
 from . import utils
-from langchain.agents import AgentType, initialize_agent, load_tools
 
 # Load environment variables
 load_dotenv()
 PERPLEXITY_API_KEY = os.getenv('PERPLEXITY_API_KEY')
+TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
+
+# Setup for LangChain
+llm = OpenAI(api_key=PERPLEXITY_API_KEY, base_url="https://api.perplexity.ai")
+search = TavilySearchAPIWrapper()
+tavily_tool = TavilySearchResults(api_wrapper=search)
 
 
 def perplexity_request(messages, cost_info, max_tokens=200):
     """Function to analyze complexity with Perplexity API"""
-    client = OpenAI(api_key=PERPLEXITY_API_KEY,
-                    base_url="https://api.perplexity.ai")
 
     # chat completion without streaming
-    response = client.chat.completions.create(
+    response = llm.chat.completions.create(
         model="mistral-7b-instruct",
         messages=messages,
         max_tokens=max_tokens,
@@ -34,16 +40,16 @@ def perplexity_request(messages, cost_info, max_tokens=200):
 
 
 def perplexity_request_with_web_search(previous_result_str, claim):
-    """Function to analyze complexity with Perplexity API"""
-    # Setup for LangChain
-    llm = OpenAI(api_key=PERPLEXITY_API_KEY,
-                 base_url="https://api.perplexity.ai")
-    tools = load_tools(["serpapi"], llm=llm)
+    """Function to make requests with Perplexity API with web search"""
+    # initialize the agent
     agent_chain = initialize_agent(
-        tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True
+        [tavily_tool],
+        llm,
+        agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+        verbose=True,
     )
 
-    # Use the chat model to generate a response based on the conversation history
+    # run the agent
     response = agent_chain.run(f"{utils.ANALYSE_USER_MESSAGE} {
                                previous_result_str}. Original Claim: {claim}")
     logging.info(response)
@@ -51,7 +57,7 @@ def perplexity_request_with_web_search(previous_result_str, claim):
     try:
         return response
     except (AttributeError, IndexError, TypeError):
-        return "No response generated from ChatGPT."
+        return "No response generated from Perplexity."
 
 
 def deep_analysis_with_perplexity(claim, previous_step_result, cost_info):

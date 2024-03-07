@@ -3,22 +3,26 @@ import os
 import logging
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.callbacks import get_openai_callback
-from langchain.agents import AgentType, initialize_agent, load_tools
+from langchain.schema import HumanMessage, SystemMessage
+from langchain.utilities.tavily_search import TavilySearchAPIWrapper
+from langchain.tools.tavily_search import TavilySearchResults
+from langchain.agents import AgentType, initialize_agent
 from . import utils
 
 # Load environment variables
 load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
+
+# Setup for LangChain
+llm = ChatOpenAI(temperature=0.3, api_key=OPENAI_API_KEY, model_name="gpt-4")
+search = TavilySearchAPIWrapper()
+tavily_tool = TavilySearchResults(api_wrapper=search)
 
 
 def gpt4_request(messages, cost_info, max_tokens=200):
     """Function to make requests to gpt4"""
-    # Setup for LangChain
-    llm = ChatOpenAI(
-        temperature=0, api_key=OPENAI_API_KEY, model_name="gpt-3.5-turbo")
-
     # If leveraging dialogue over several turns, you might update the context here
     # chat_gpt.update_context(...) # This method might vary depending on LangChain's future updates
 
@@ -37,15 +41,16 @@ def gpt4_request(messages, cost_info, max_tokens=200):
 
 
 def gpt4_request_with_web_search(previous_result_str, claim):
-    """Function to make requests to gpt4"""
-    # Setup for LangChain
-    llm = ChatOpenAI(temperature=0, api_key=OPENAI_API_KEY, model_name="gpt-4")
-    tools = load_tools(["serpapi"], llm=llm)
+    """Function to make requests to gpt4 with web search"""
+    # initialize the agent
     agent_chain = initialize_agent(
-        tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True
+        [tavily_tool],
+        llm,
+        agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+        verbose=True,
     )
 
-    # Use the chat model to generate a response based on the conversation history
+    # run the agent
     response = agent_chain.run(f"{utils.REVIEW_ANALYSIS_INSTRUCTION} {
                                previous_result_str}. Original Claim: {claim}")
     logging.info(response)
