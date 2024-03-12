@@ -3,20 +3,14 @@ import logging
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from langchain.utilities.tavily_search import TavilySearchAPIWrapper
-from langchain.tools.tavily_search import TavilySearchResults
-from langchain.agents import AgentType, initialize_agent
 from . import utils
 
 # Load environment variables
 load_dotenv()
 PERPLEXITY_API_KEY = os.getenv('PERPLEXITY_API_KEY')
-TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
 
 # Setup for LangChain
 llm = OpenAI(api_key=PERPLEXITY_API_KEY, base_url="https://api.perplexity.ai")
-search = TavilySearchAPIWrapper()
-tavily_tool = TavilySearchResults(api_wrapper=search)
 
 
 def perplexity_request(messages, cost_info, max_tokens=200):
@@ -37,27 +31,6 @@ def perplexity_request(messages, cost_info, max_tokens=200):
         return response.choices[0].message.content
     except (AttributeError, IndexError, TypeError):
         return "No response generated from perplexity."
-
-
-def perplexity_request_with_web_search(previous_result_str, claim):
-    """Function to make requests with Perplexity API with web search"""
-    # initialize the agent
-    agent_chain = initialize_agent(
-        [tavily_tool],
-        llm,
-        agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-        verbose=True,
-    )
-
-    # run the agent
-    response = agent_chain.run(f"{utils.ANALYSE_USER_MESSAGE} {
-                               previous_result_str}. Original Claim: {claim}")
-    logging.info(response)
-
-    try:
-        return response
-    except (AttributeError, IndexError, TypeError):
-        return "No response generated from Perplexity."
 
 
 def deep_analysis_with_perplexity(claim, previous_step_result, cost_info):

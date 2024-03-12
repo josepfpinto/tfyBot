@@ -33,7 +33,7 @@ def fact_check(message, cost_info):
     # TODO: improve focusing on wikipedia AND https://toolbox.google.com/factcheck/apis
     fact_check_result = initial_fact_checking(message, cost_info)
 
-    # Step 2: Advanced Analysis with PerplexityAPI OR CHATGPT(test temperature) WITH URLs
+    # Step 2: Advanced Analysis with PerplexityAPI OR CHATGPT WITH URLs
     # TODO: Test, Review, Improve and Select
     deep_analysis_result_perplexity = perplexity.deep_analysis_with_perplexity(
         message, fact_check_result, cost_info)

@@ -9,6 +9,13 @@ from langchain.agents import AgentType, initialize_agent, load_tools
 from . import utils
 from . import shell_tool
 from . import websearch_tool
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.prompts import HumanMessagePromptTemplate, SystemMessagePromptTemplate
+from langchain.agents.format_scratchpad.openai_tools import (
+    format_to_openai_tool_messages,
+)
+from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
+from langchain.agents import AgentExecutor
 
 # Load environment variables
 load_dotenv()
@@ -38,16 +45,73 @@ def gpt4_request(messages, cost_info, max_tokens=200):
         return "No response generated from ChatGPT."
 
 
-def gpt4_request_with_web_search(previous_result_str, cost_info, claim):
+def gpt4_request_with_web_search_premium(instruction, user_message, previous_check='', cost_info=[]):
     """Function to make requests to gpt4 with web search"""
-    # initialize the agent
-    agent_chain = initialize_agent(
-        [websearch_tool.search_tavily, terminal, shell_tool.python_repl], llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+    # set message
+    messages_template = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(
+                utils.default_system_prompt),
+            HumanMessagePromptTemplate.from_template(
+                utils.default_user_prompt)
+        ]
+    )
+    messages = messages_template.partial(
+        INSTRUCTION=instruction, JSON_KEYS=utils.JSON_KEYS, FACT_CHECK=previous_check, MESSAGE=user_message)
 
-    # run the agent
+    # initialize the agent
+    tools = [websearch_tool.search_tavily, terminal, shell_tool.python_repl]
+    agent_chain = initialize_agent(
+        tools, llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+
     with get_openai_callback() as cb:
-        response = agent_chain.run(f"{utils.ANALYSE_USER_MESSAGE} {
-            previous_result_str}. Original Claim: {claim}")
+        response = agent_chain.run(messages)
+    logging.info(response)
+
+    try:
+        # Calculate cost
+        cost_info.append(utils.calculate_cost(
+            utils.RequestType.GPT, cb.total_tokens, cb.total_cost))
+        return response
+    except (AttributeError, IndexError, TypeError):
+        return "No response generated from ChatGPT."
+
+
+# Not yet working...
+def gpt4_request_with_web_search(instruction, user_message, previous_check='', cost_info=[]):
+    """Function to make requests to gpt4 with web search"""
+    # set message
+    messages_template = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(
+                utils.default_system_prompt),
+            HumanMessagePromptTemplate.from_template(
+                utils.default_user_prompt),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
+    messages = messages_template.partial(
+        INSTRUCTION=instruction, JSON_KEYS=utils.JSON_KEYS, FACT_CHECK=previous_check)
+
+    # initialize the agent
+    tools = [websearch_tool.search_serper, terminal, shell_tool.python_repl]
+    llm_with_tools = llm.bind_tools(tools)
+    agent_chain = (
+        {
+            "MESSAGE": lambda x: x["MESSAGE"],
+            "agent_scratchpad": lambda x: format_to_openai_tool_messages(
+                x["intermediate_steps"]
+            ),
+        }
+        | messages
+        | llm_with_tools
+        | OpenAIToolsAgentOutputParser()
+    )
+    agent_executor = AgentExecutor(
+        agent=agent_chain, tools=tools, verbose=True)
+
+    with get_openai_callback() as cb:
+        response = agent_executor.invoke({"MESSAGE": user_message})
     logging.info(response)
 
     try:
