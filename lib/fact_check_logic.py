@@ -1,11 +1,10 @@
 """Main fact check logic"""
-import json
 import requests
 from . import gpt
 from . import utils
-from . import perplexity
 
 
+# WikipediaAPIWrapper!!!!!
 def initial_fact_checking(claim, cost_info):
     """
     Fact-checking by querying an external API.
@@ -34,19 +33,16 @@ def fact_check(message, cost_info):
     fact_check_result = initial_fact_checking(message, cost_info)
 
     # Step 2: Advanced Analysis with PerplexityAPI OR CHATGPT WITH URLs
-    # TODO: Test, Review, Improve and Select
-    deep_analysis_result_perplexity = perplexity.deep_analysis_with_perplexity(
+    deep_analysis_result = gpt.analyse_claim(
         message, fact_check_result, cost_info)
 
     # Step 3: Review analysis
     # TODO: Improve implementation with GPT-4 to confirm answer and provide a nuanced perspective
     # TODO: Include the request to assure the answer has no more than xxx char
-    deep_analysis_result_gpt = gpt.review_previous_analysis_with_gpt4_langchain(
-        message,  json.dumps(deep_analysis_result_perplexity), cost_info)
+    # deep_analysis_result_gpt = gpt.review_previous_analysis(message, json.dumps(deep_analysis_result_perplexity), cost_info)
 
     # Output results
     return {
         "initial_fact_check_result": fact_check_result,
-        "deep_analysis": utils.json_to_formatted_string(deep_analysis_result_perplexity),
-        "analysis_review": utils.json_to_formatted_string(deep_analysis_result_gpt),
+        "deep_analysis": utils.json_to_formatted_string(deep_analysis_result),
     }

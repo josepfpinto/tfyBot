@@ -2,9 +2,8 @@
 import logging
 import json
 import re
+import sys
 from flask import jsonify
-from langchain.prompts import PromptTemplate
-from langchain_core.messages import SystemMessage
 
 
 class RequestType:
@@ -92,12 +91,23 @@ def calculate_cost(request_type=RequestType.GPT, tokens=0, cost=0, prompt_tokens
         return {"type": request_type, "tokens": 0, "price": 0}
 
 
-def get_dynamic_max_tokens(claim):
-    """Function to calculate max tokens based on claim length"""
-    return 200 + len(claim) // 20
-
-
 def create_api_response(status, message):
     """Function to create API response - {status: string, message: string}, status: int"""
     statusString = "ok" if status == 200 else "error"
     return jsonify({"status": statusString, "message": message}), status
+
+
+def get_dynamic_max_tokens(max_tokens, messages):
+    """Function to calculate max tokens based on messages length"""
+
+    if max_tokens == 0:
+        return 200 + len(messages) // 10
+    return max_tokens
+
+
+def configure_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        stream=sys.stdout,
+    )

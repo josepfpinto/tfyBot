@@ -45,6 +45,7 @@ headers = {'Content-Type': 'application/json',
 
 
 def process_text_for_whatsapp(text):
+    """Prepare message for whatsapp"""
     # Remove brackets
     pattern = r"\【.*?\】"
     # Substitute the pattern with an empty string
@@ -116,7 +117,7 @@ def send_template_message(recipient, template="hello_world"):
         return e, 403
 
 
-def send_message(recipient, data):
+def send_message(recipient, message):
     """send message to Whatsapp"""
     try:
         final_data = json.dumps(
@@ -125,10 +126,10 @@ def send_message(recipient, data):
                 "recipient_type": "individual",
                 "to": recipient,
                 "type": "text",
-                "text": {"preview_url": False, "body": process_text_for_whatsapp(data)},
+                "text": {"preview_url": False, "body": process_text_for_whatsapp(message)},
             }
         )
-        logging.info("sending...  %s",  final_data)
+        logging.info("sending...  %s to %s",  final_data, whatsapp_url)
         response = requests.post(whatsapp_url,
                                  headers=headers,
                                  data=final_data,
@@ -137,4 +138,4 @@ def send_message(recipient, data):
         return utils.create_api_response(response.status_code, 'message sent' if response.status_code == 200 else response.text)
 
     except Exception as e:
-        return e, 403
+        return utils.create_api_response(403, e)

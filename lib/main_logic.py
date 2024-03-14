@@ -19,6 +19,9 @@ def process_message(body):
     timestamp = int(message['timestamp'])
     final_message, media_id = whatsapp.get_message(message)
 
+    print('---------')
+    print(body)
+
     try:
 
         if aws.is_repeted_message(message_id):  # TODO
@@ -35,8 +38,8 @@ def process_message(body):
         # Output: Transcribed text ready for further processing.
 
         # Placeholder Step 3: Language Translation
-        translated_message = gpt.translate_with_gpt4_langchain(
-            final_message, cost_info)
+        # translated_message = gpt.translate_with_gpt4_langchain(
+        #     final_message, cost_info)
 
         # Placeholder Step 4: Confirm the type of LLM to be used, having into account the type of skills needed to answer (eg. websearch and text comprehension VS math)
 
@@ -45,14 +48,14 @@ def process_message(body):
         # TODO: 5.2 MESSAGES (id, phone number, threadId, message, cost)
 
         # Step 6 / 7 / 8: Fact-Checking
-        response = fact_check_logic.fact_check(
-            translated_message['translated_message'], cost_info)
-        logging.info(response)
-        logging.info(cost_info)
+        # response = fact_check_logic.fact_check(
+        #     translated_message['translated_message'], cost_info)
+        # logging.info(response)
+        # logging.info(cost_info)
 
         # Placeholder Step 9: Save data in DynamoDB Table:
-        aws.save_in_db(translated_message['translated_message'],
-                       number, message_id, media_id, timestamp, response)
+        # aws.save_in_db(translated_message['translated_message'],
+        #                number, message_id, media_id, timestamp, response)
 
         # Send message to user
         return whatsapp.send_message(number, 'test response')
