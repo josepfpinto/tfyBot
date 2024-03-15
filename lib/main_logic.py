@@ -1,7 +1,7 @@
 """main bot logic"""
 import logging
-from . import whatsapp, aws, fact_check_logic, gpt, utils
-
+from .fact_check_logic import fect_check_message
+from . import whatsapp, aws, utils
 
 # List to store cost information
 cost_info = []
@@ -17,15 +17,35 @@ def process_message(body):
     number = message['from']
     message_id = message['id']
     timestamp = int(message['timestamp'])
-    final_message, media_id = whatsapp.get_message(message)
+    final_message, media_id, interaction_id, type_message = whatsapp.get_message(
+        message)
 
     print('---------')
     print(body)
 
     try:
-
         if aws.is_repeted_message(message_id):  # TODO
             return utils.create_api_response(200, 'repeated message')
+
+        if type_message == 'text':
+            logging.info('text message')
+
+            # if it is a greetings message...
+            # TODO...
+            if final_message.lower() == 'hi':
+                return whatsapp.send_message(number, '', 'interactive_welcome')
+
+            # if it is factcheck...
+            return whatsapp.send_message(number, '', 'interactive_more_menu')
+
+        elif type_message == 'interactive':
+            logging.info('interactive message')
+            if interaction_id == "factcheck":
+                return whatsapp.send_message(number, 'Ok then! Send your message and I’ll do my best to fact check it. 😊')
+            elif interaction_id == "buttonaddmore":
+                return whatsapp.send_message(number, 'Ok, I’ll wait.')
+            elif interaction_id == "buttonready":
+                return fect_check_message(final_message, number, message_id, media_id, timestamp, cost_info)
 
         # Placeholder Step 1: Confirm what type of message it is:
         # TODO: 1.1 New number (confirm against dynamoDB)
@@ -46,20 +66,6 @@ def process_message(body):
         # Placeholder Step 5: Save data in DynamoDB Table:
         # TODO: 5.1 USERS (phone number, language) - if number still doesn't exist there
         # TODO: 5.2 MESSAGES (id, phone number, threadId, message, cost)
-
-        # Step 6 / 7 / 8: Fact-Checking
-        # response = fact_check_logic.fact_check(
-        #     translated_message['translated_message'], cost_info)
-        # logging.info(response)
-        # logging.info(cost_info)
-
-        # Placeholder Step 9: Save data in DynamoDB Table:
-        # aws.save_in_db(translated_message['translated_message'],
-        #                number, message_id, media_id, timestamp, response)
-
-        # Send message to user
-        return whatsapp.send_message(number, 'test response')
-        # return whatsapp.send_message(number, response['analysis_review'])
 
     except Exception as e:
         return utils.create_api_response(400, str(e))

@@ -2,9 +2,9 @@
 import logging
 import json
 import os
-import re
 from dotenv import load_dotenv
 import requests
+from .whatsapp_messages import select_message_template
 from . import utils
 
 # Load environment variables
@@ -44,25 +44,6 @@ headers = {'Content-Type': 'application/json',
            'Authorization': 'Bearer ' + WHATSAPP_TOKEN}
 
 
-def process_text_for_whatsapp(text):
-    """Prepare message for whatsapp"""
-    # Remove brackets
-    pattern = r"\【.*?\】"
-    # Substitute the pattern with an empty string
-    text = re.sub(pattern, "", text).strip()
-
-    # Pattern to find double asterisks including the word(s) in between
-    pattern = r"\*\*(.*?)\*\*"
-
-    # Replacement pattern with single asterisks
-    replacement = r"*\1*"
-
-    # Substitute occurrences of the pattern with the replacement
-    whatsapp_style_text = re.sub(pattern, replacement, text)
-
-    return whatsapp_style_text
-
-
 def is_valid_whatsapp_message(body):
     """
     Check if the incoming webhook event has a valid WhatsApp message structure.
@@ -82,15 +63,26 @@ def get_message(message):
     media_id = ''
     text = 'Message not recognized'
     type_message = message.get('type', '')
+    interaction_id = 0
+    interaction_type = message.get('interactive', {}).get('type', '')
 
     if type_message == 'text':
         text = message['text']['body']
+        print('text', text)
+    elif type_message == 'interactive':
+        text = ''
+        if interaction_type == 'button_reply':
+            text = message['interactive']['button_reply']['title']
+            interaction_id = message['interactive']['button_reply']['id']
+        elif interaction_type == 'list_reply':
+            text = message['interactive']['list_reply']['title']
+            interaction_id = message['interactive']['list_reply']['id']
     elif type_message == 'document':
         media_id = message[type_message]['id']
         text = message[type_message].get('filename', '')
     else:
         text = 'Message not processed'
-    return text, media_id
+    return text, media_id, interaction_id, type_message
 
 
 def send_template_message(recipient, template="hello_world"):
@@ -117,18 +109,16 @@ def send_template_message(recipient, template="hello_world"):
         return e, 403
 
 
-def send_message(recipient, message):
+def send_message(recipient, message, message_type='text'):
     """send message to Whatsapp"""
     try:
-        final_data = json.dumps(
-            {
-                "messaging_product": "whatsapp",
-                "recipient_type": "individual",
-                "to": recipient,
-                "type": "text",
-                "text": {"preview_url": False, "body": process_text_for_whatsapp(message)},
-            }
-        )
+        data = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": recipient,
+        }
+        select_message_template(message_type, data, message)
+        final_data = json.dumps(data)
         logging.info("sending...  %s to %s",  final_data, whatsapp_url)
         response = requests.post(whatsapp_url,
                                  headers=headers,

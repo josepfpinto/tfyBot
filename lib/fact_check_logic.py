@@ -1,10 +1,10 @@
 """Main fact check logic"""
+import logging
 import requests
 from . import gpt
-from . import utils
+from . import whatsapp, aws, utils
 
 
-# WikipediaAPIWrapper!!!!!
 def initial_fact_checking(claim, cost_info):
     """
     Fact-checking by querying an external API.
@@ -29,10 +29,10 @@ def fact_check(message, cost_info):
     Process a fact-check request through initial fact-checking and deep analysis.
     """
     # Step 1: Initial Fact-Checking with Datasets/APIs
-    # TODO: improve focusing on wikipedia AND https://toolbox.google.com/factcheck/apis
+    # TODO: improve focusing on wikipedia AND https://toolbox.google.com/factcheck/apis OR WikipediaAPIWrapper!
     fact_check_result = initial_fact_checking(message, cost_info)
 
-    # Step 2: Advanced Analysis with PerplexityAPI OR CHATGPT WITH URLs
+    # Step 2: Advanced Analysis with LLM (includes fecthinf urls)
     deep_analysis_result = gpt.analyse_claim(
         message, fact_check_result, cost_info)
 
@@ -46,3 +46,17 @@ def fact_check(message, cost_info):
         "initial_fact_check_result": fact_check_result,
         "deep_analysis": utils.json_to_formatted_string(deep_analysis_result),
     }
+
+
+def fect_check_message(message, number, message_id, media_id, timestamp, cost_info):
+    """function that process """
+    # Fact-Checking
+    response = fact_check(message, cost_info)
+    logging.info(response)
+    logging.info(cost_info)
+
+    # Placeholder Step 9: Save data in DynamoDB Table:
+    aws.save_in_db(message, number, message_id, media_id, timestamp, response)
+
+    # Send message to user
+    return whatsapp.send_message(number, response['deep_analysis'], 'interactive_main_menu')
