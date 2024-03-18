@@ -1,7 +1,7 @@
 """main bot logic"""
 import logging
-from .fact_check_logic import fect_check_message
-from . import whatsapp, aws, utils
+from .fact_check_logic import fact_check_message
+from . import whatsapp, aws, utils, gpt
 
 # List to store cost information
 cost_info = []
@@ -27,28 +27,54 @@ def process_message(body):
         if aws.is_repeted_message(message_id):  # TODO
             return utils.create_api_response(200, 'repeated message')
 
+        previous_user_messages = aws.get_last_user_message(
+            number, timestamp, message_id)  # TODO
+
+        if aws.confirm_if_new_msg(number, timestamp):  # TODO
+            return utils.create_api_response(400, 'newer message exists')
+
+        language = aws.get_user_language(number)  # TODO
+
         if type_message == 'text':
             logging.info('text message')
-
-            # if it is a greetings message...
-            # TODO...
-            if final_message.lower() == 'hi':
-                return whatsapp.send_message(number, '', 'interactive_welcome')
-
-            # if it is factcheck...
-            return whatsapp.send_message(number, '', 'interactive_more_menu')
+            category = gpt.categorize_with_gpt4_langchain(
+                final_message,
+                cost_info,
+                previous_user_messages[-1] if previous_user_messages else 'None')
+            if category.value == 'GREETINGS':
+                return whatsapp.send_message(number, '', 'interactive_welcome', language)
+            elif category.value == 'FACTCHECK':
+                return whatsapp.send_message(number, '', 'interactive_more_menu', language)
+            # elif category.value == 'LANGUAGE': TODO...
+            else:
+                utils.create_api_response(400, f'''Failed to categorize user message: {
+                                          final_message} - category: {str(category)}''')
 
         elif type_message == 'interactive':
             logging.info('interactive message')
             if interaction_id == "factcheck":
-                return whatsapp.send_message(number, 'Ok then! Send your message and I’ll do my best to fact check it. 😊')
+                return whatsapp.send_message(number,
+                                             '''Ok then! Send your message and
+                                             I’ll do my best to fact check it. 😊''', language)
             elif interaction_id == "buttonaddmore":
-                return whatsapp.send_message(number, 'Ok, I’ll wait.')
+                return whatsapp.send_message(number, 'Ok, I’ll wait.', language)
             elif interaction_id == "buttonready":
-                return fect_check_message(final_message, number, message_id, media_id, timestamp, cost_info)
+                return fact_check_message(final_message,
+                                          number,
+                                          message_id,
+                                          media_id,
+                                          timestamp,
+                                          cost_info,
+                                          language)
+            elif interaction_id == "buttoncancel":
+                return utils.create_api_response(200, 'Canceled by user')
+            # elif interaction_id == "changelanguage": TODO...
+            # elif interaction_id == "moreinfo": TODO...
+            else:
+                utils.create_api_response(400, f'''Failed identify interactive type: {
+                                          final_message}''')
 
         # Placeholder Step 1: Confirm what type of message it is:
-        # TODO: 1.1 New number (confirm against dynamoDB)
         # TODO: 1.2 Confirm if it is the definition of preferred language (by keyword?) OR Request for institutional info (by keyword?) OR Continuation of previous conversation VS New factcheck request (depending if it is a new number or not and comparing to the time of previous messages - if it is more than 10min apart consider to be a new message).
         # TODO: 1.3 In case it can be the continuation of the conversation, use LLM to confirm which case.
 

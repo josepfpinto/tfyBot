@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 import requests
 from .whatsapp_messages import select_message_template
-from . import utils
+from . import utils, gpt
 
 # Load environment variables
 load_dotenv()
@@ -109,9 +109,13 @@ def send_template_message(recipient, template="hello_world"):
         return e, 403
 
 
-def send_message(recipient, message, message_type='text'):
+def send_message(recipient, message, cost_info, message_type='text', language=None):
     """send message to Whatsapp"""
     try:
+        if language:
+            translated_message = gpt.translate_with_gpt4_langchain(
+                message, cost_info, language).translated_message
+            message = translated_message if translated_message else message
         data = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",

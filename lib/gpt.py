@@ -67,13 +67,16 @@ def gpt4_request_with_web_search(instruction, user_message, previous_check='', c
     messages_template = ChatPromptTemplate.from_messages(
         [
             SystemMessagePromptTemplate.from_template(
-                utils.default_system_prompt),
+                utils.DEFAULT_SYSTEM_PROMPT),
             HumanMessagePromptTemplate.from_template(
-                utils.default_user_prompt)
+                utils.DEFAULT_USER_PROMPT)
         ]
     )
     messages = messages_template.partial(
-        INSTRUCTION=instruction, JSON_KEYS=utils.JSON_KEYS, FACT_CHECK=previous_check, MESSAGE=user_message).format_messages()
+        INSTRUCTION=instruction,
+        JSON_KEYS=utils.JSON_KEYS,
+        FACT_CHECK=previous_check,
+        MESSAGE=user_message).format_messages()
 
     # confirm max tokens
     max_tokens = utils.get_dynamic_max_tokens(
@@ -109,14 +112,16 @@ def gpt4_request_with_web_search_2(instruction, user_message, previous_check='',
     messages_template = ChatPromptTemplate.from_messages(
         [
             SystemMessagePromptTemplate.from_template(
-                utils.default_system_prompt),
+                utils.DEFAULT_SYSTEM_PROMPT),
             HumanMessagePromptTemplate.from_template(
-                utils.default_user_prompt),
+                utils.DEFAULT_USER_PROMPT),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ]
     )
     messages = messages_template.partial(
-        INSTRUCTION=instruction, JSON_KEYS=utils.JSON_KEYS, FACT_CHECK=previous_check)
+        INSTRUCTION=instruction,
+        JSON_KEYS=utils.JSON_KEYS,
+        FACT_CHECK=previous_check)
 
     # confirm max tokens
     max_tokens = utils.get_dynamic_max_tokens(
@@ -171,16 +176,40 @@ def review_previous_analysis(claim, previous_step_result, cost_info):
     return gpt4_request_with_web_search(utils.REVIEW_ANALYSIS_INSTRUCTION, claim, previous_step_result, cost_info)
 
 
-def translate_with_gpt4_langchain(claim, cost_info):
+def translate_with_gpt4_langchain(message, cost_info, language):
     """
-    Translate a claim using LangChain with an OpenAI model. Output: {translated_message: string, original_language: string}
+    Translate a claim using LangChain with an OpenAI model. Output: {translated_message: string}
     """
-    messages = [
-        SystemMessage(
-            content=f"{utils.TRANSLATE}"
-        ),
-        HumanMessage(
-            content=claim
-        ),
-    ]
+    # set message
+    messages_template = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(
+                utils.TRANSLATE),
+            HumanMessagePromptTemplate.from_template({'MESSAGE'})
+        ]
+    )
+    messages = messages_template.partial(
+        LANGUAGE=language,
+        MESSAGE=message).format_messages()
+    return gpt4_request(messages, cost_info)
+
+
+def categorize_with_gpt4_langchain(message, cost_info, previous_user_message='none'):
+    """
+    Categorize the user message LangChain with an OpenAI model. Output: {value: GREETINGS | FACTCHECK}
+    """
+    # set message
+    previous_user_message = str(previous_user_message)
+    messages_template = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(
+                utils.CATEGORIZE_USER_MESSAGE),
+            HumanMessagePromptTemplate.from_template({'MESSAGE'})
+        ]
+    )
+    messages = messages_template.partial(
+        PREVIOUS_USER_MESSAGES=previous_user_message,
+        CATEGORIZE_USER_MESSAGE_JSON_KEYS=utils.CATEGORIZE_USER_MESSAGE_JSON_KEYS,
+        MESSAGE=message).format_messages()
+
     return gpt4_request(messages, cost_info)

@@ -48,15 +48,19 @@ def fact_check(message, cost_info):
     }
 
 
-def fect_check_message(message, number, message_id, media_id, timestamp, cost_info):
+def fact_check_message(message, number, message_id, media_id, timestamp, cost_info, language=None):
     """function that process """
+    # Check if new message exists
+    if aws.confirm_if_new_msg(number, timestamp):
+        return utils.create_api_response(400, 'newer message exists')
+
     # Fact-Checking
     response = fact_check(message, cost_info)
     logging.info(response)
     logging.info(cost_info)
 
     # Placeholder Step 9: Save data in DynamoDB Table:
-    aws.save_in_db(message, number, message_id, media_id, timestamp, response)
+    aws.save_in_db(response, number, message_id, media_id, timestamp)
 
     # Send message to user
-    return whatsapp.send_message(number, response['deep_analysis'], 'interactive_main_menu')
+    return whatsapp.send_message(number, response['deep_analysis'], 'interactive_main_menu', language)

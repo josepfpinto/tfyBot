@@ -17,15 +17,28 @@ class RequestType:
     PERPLEXITY = 'PERPLEXITY'
 
 
-TRANSLATE_JSON_KEYS = '''{translated_message: <Only the translated message in english>, original_language: <original langugage of the user message>}'''
-TRANSLATE = f'''Translate the user message to english and identify the original language. Format of the response should be a json (ready to be converted by json.loads) with these keys: {
-    TRANSLATE_JSON_KEYS} '''
+CATEGORIZE_USER_MESSAGE_JSON_KEYS = '''{value: <GREETINGS | FACTCHECK>}'''
+CATEGORIZE_USER_MESSAGE = '''Categorize incoming messages from users into two categories: GREETINGS or FACTCHECK.
+    If a message is a simple greeting or doesn't clearly require fact-checking, categorize it as GREETINGS. 
+    Otherwise, if it contains information (or partial information) that might require verification, categorize it as FACTCHECK. 
+    Previous messages from user: {PREVIOUS_USER_MESSAGES}. Format of the response should be a json (ready to be converted by json.loads) 
+    with these keys: {CATEGORIZE_USER_MESSAGE_JSON_KEYS}'''
+
+TRANSLATE_JSON_KEYS = '''{translated_message: <translated message | empty string>}'''
+TRANSLATE = '''If necessary, translate the user message to {LANGUAGE}. If no translation is necessary send an empty string.
+    Format of the response should be a json (ready to be converted by json.loads) with these keys: {TRANSLATE_JSON_KEYS}'''
 
 JSON_KEYS = '''{truthfulness: <FALSE | PROBABLY FALSE | PROBABLY TRUE | TRUE>, explanation: <Clear, plain language explanation>, links: <List of current, verified evidence links or an empty list if none apply>}'''
-ANALYSE_USER_MESSAGE = '''Analyse the content of the user claim and provide an assessment of its truthfulness in simple and plain language using your own knowledge and websearch, indicating the probability of being true or false and the reasoning behind this assessment, together with verified existing links that support this assessment. If no suitable links are available or the existing ones cannot be verified, provide an empty list of links.'''
-REVIEW_ANALYSIS_INSTRUCTION = '''Please review the provided assessment regarding the truthfulness of a user's claim. Adjust the assessment if necessary, ensuring accuracy and objectivity. Verify the functionality and relevance of the supplied links list, removing any link that is not available or not relevant, providing an empty list.'''
-default_system_prompt = "{INSTRUCTION} Format of the response should be a json (ready to be converted by json.loads) with these keys: {JSON_KEYS} Previous fact-check: {FACT_CHECK}"
-default_user_prompt = "Original Claim: {MESSAGE}"
+ANALYSE_USER_MESSAGE = '''Analyse the content of the user claim and provide an assessment of its truthfulness
+    in simple and plain language using your own knowledge and websearch, indicating the probability of being true
+    or false and the reasoning behind this assessment, together with verified existing links that support this assessment. 
+    If no suitable links are available or the existing ones cannot be verified, provide an empty list of links.'''
+REVIEW_ANALYSIS_INSTRUCTION = '''Please review the provided assessment regarding the truthfulness of a user's claim.
+    Adjust the assessment if necessary, ensuring accuracy and objectivity. Verify the functionality and relevance of the supplied links list, 
+    removing any link that is not available or not relevant, providing an empty list.'''
+DEFAULT_SYSTEM_PROMPT = '''{INSTRUCTION} Format of the response should be a json (ready to be converted by json.loads)
+    with these keys: {JSON_KEYS} Previous fact-check: {FACT_CHECK}'''
+DEFAULT_USER_PROMPT = "Original Claim: {MESSAGE}"
 
 
 def clean_and_convert_to_json(input_str):
