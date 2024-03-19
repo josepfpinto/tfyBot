@@ -63,4 +63,4 @@ def fact_check_message(message, number, message_id, media_id, timestamp, cost_in
     aws.save_in_db(response, number, message_id, media_id, timestamp)
 
     # Send message to user
-    return whatsapp.send_message(number, response['deep_analysis'], 'interactive_main_menu', language)
+    return whatsapp.send_message(number, response['deep_analysis'], cost_info, 'interactive_main_menu', language)

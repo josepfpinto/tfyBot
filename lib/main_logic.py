@@ -42,10 +42,15 @@ def process_message(body):
                 cost_info,
                 previous_user_messages[-1] if previous_user_messages else 'None')
             if category.value == 'GREETINGS':
-                return whatsapp.send_message(number, '', 'interactive_welcome', language)
+                return whatsapp.send_message(number, '', cost_info, 'interactive_welcome', language)
             elif category.value == 'FACTCHECK':
-                return whatsapp.send_message(number, '', 'interactive_more_menu', language)
-            # elif category.value == 'LANGUAGE': TODO...
+                return whatsapp.send_message(number, '', cost_info, 'interactive_more_menu', language)
+            elif category.value == 'LANGUAGE':
+                if aws.change_user_language(number, language):
+                    language = aws.get_user_language(number)
+                    return whatsapp.send_message(number, 'Language changed', cost_info, 'interactive_main_menu', language)
+                else:
+                    return whatsapp.send_message(number, "Sorry, wasn't able to change the language", cost_info, 'interactive_main_menu', language)
             else:
                 utils.create_api_response(400, f'''Failed to categorize user message: {
                                           final_message} - category: {str(category)}''')
@@ -55,9 +60,9 @@ def process_message(body):
             if interaction_id == "factcheck":
                 return whatsapp.send_message(number,
                                              '''Ok then! Send your message and
-                                             I’ll do my best to fact check it. 😊''', language)
+                                             I’ll do my best to fact check it. 😊''', cost_info, 'text', language)
             elif interaction_id == "buttonaddmore":
-                return whatsapp.send_message(number, 'Ok, I’ll wait.', language)
+                return whatsapp.send_message(number, 'Ok, I’ll wait.', cost_info, 'text', language)
             elif interaction_id == "buttonready":
                 return fact_check_message(final_message,
                                           number,
@@ -68,30 +73,21 @@ def process_message(body):
                                           language)
             elif interaction_id == "buttoncancel":
                 return utils.create_api_response(200, 'Canceled by user')
-            # elif interaction_id == "changelanguage": TODO...
+            elif interaction_id == "changelanguage":
+                if language:
+                    return whatsapp.send_message(number, f'''At the moment your prefered language is ${language}.
+                                                 Please write your new prefered language.''', cost_info, 'interactive_main_menu', language)
+                return whatsapp.send_message(number, """You don't have a prefered language. If you want, please write your prefered language.""",
+                                             cost_info, 'interactive_main_menu', language)
             # elif interaction_id == "moreinfo": TODO...
             else:
                 utils.create_api_response(400, f'''Failed identify interactive type: {
                                           final_message}''')
 
-        # Placeholder Step 1: Confirm what type of message it is:
-        # TODO: 1.2 Confirm if it is the definition of preferred language (by keyword?) OR Request for institutional info (by keyword?) OR Continuation of previous conversation VS New factcheck request (depending if it is a new number or not and comparing to the time of previous messages - if it is more than 10min apart consider to be a new message).
-        # TODO: 1.3 In case it can be the continuation of the conversation, use LLM to confirm which case.
-
-        # Placeholder Step 2: Transcription of Images or Audio
+        # Transcription of Images or Audio
         # TODO: Check for Media Type: Detect if the input is an image or audio file.
         # TODO: Transcription Service: Use a transcription API (from AWS?) to convert media to text.
         # Output: Transcribed text ready for further processing.
-
-        # Placeholder Step 3: Language Translation
-        # translated_message = gpt.translate_with_gpt4_langchain(
-        #     final_message, cost_info)
-
-        # Placeholder Step 4: Confirm the type of LLM to be used, having into account the type of skills needed to answer (eg. websearch and text comprehension VS math)
-
-        # Placeholder Step 5: Save data in DynamoDB Table:
-        # TODO: 5.1 USERS (phone number, language) - if number still doesn't exist there
-        # TODO: 5.2 MESSAGES (id, phone number, threadId, message, cost)
 
     except Exception as e:
         return utils.create_api_response(400, str(e))

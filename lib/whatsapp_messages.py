@@ -34,7 +34,7 @@ def get_main_menu():
                 "rows": [
                     filter_keys(options["factcheck"], exclude_keys),
                     # filter_keys(options["moreinfo"], exclude_keys),
-                    # filter_keys(options["changelanguage"], exclude_keys),
+                    filter_keys(options["changelanguage"], exclude_keys),
                 ],
             },
         ],

@@ -17,9 +17,10 @@ class RequestType:
     PERPLEXITY = 'PERPLEXITY'
 
 
-CATEGORIZE_USER_MESSAGE_JSON_KEYS = '''{value: <GREETINGS | FACTCHECK>}'''
-CATEGORIZE_USER_MESSAGE = '''Categorize incoming messages from users into two categories: GREETINGS or FACTCHECK.
-    If a message is a simple greeting or doesn't clearly require fact-checking, categorize it as GREETINGS. 
+CATEGORIZE_USER_MESSAGE_JSON_KEYS = '''{value: <GREETINGS | LANGUAGE | FACTCHECK>}'''
+CATEGORIZE_USER_MESSAGE = '''Categorize incoming messages from users into three categories: GREETINGS, LANGUAGE or FACTCHECK.
+    If a message contains the name of a language, categorize it as LANGUAGE.
+    Else, if a message is a simple greeting or doesn't clearly require fact-checking, categorize it as GREETINGS. 
     Otherwise, if it contains information (or partial information) that might require verification, categorize it as FACTCHECK. 
     Previous messages from user: {PREVIOUS_USER_MESSAGES}. Format of the response should be a json (ready to be converted by json.loads) 
     with these keys: {CATEGORIZE_USER_MESSAGE_JSON_KEYS}'''

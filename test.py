@@ -10,7 +10,7 @@ cost_info = []
 DUMMY_MESSAGE = "Olives make you fat"
 WHATSAPP_RECIPIENT_WAID = os.getenv("WHATSAPP_RECIPIENT_WAID")
 number = '351xxxxxxxxx'
-print(send_message(number, 'test response 2'))
+print(send_message(number, 'test response 2', cost_info, 'text'))
 
 # fact_check_result = initial_fact_checking(DUMMY_MESSAGE, cost_info)
 # search_response = gpt.analyse_claim(

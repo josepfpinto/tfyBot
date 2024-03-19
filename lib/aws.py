@@ -39,3 +39,9 @@ def get_user_language(number):
     """ Function that gets user prefered language. Returns the language in string or None. """
     # TODO: ...
     return None if number > 0 else 'English'
+
+
+def change_user_language(number, language):
+    """ Function that changes the user prefered language. Returns true or false, depending on the request success. """
+    # TODO: ...
+    return True
