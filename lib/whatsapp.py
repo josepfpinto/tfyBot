@@ -63,7 +63,7 @@ def get_message(message):
     media_id = ''
     text = 'Message not recognized'
     type_message = message.get('type', '')
-    interaction_id = 0
+    interaction_id = 'none'
     interaction_type = message.get('interactive', {}).get('type', '')
 
     if type_message == 'text':
@@ -114,7 +114,7 @@ def send_message(recipient, message, cost_info, message_type='text', language=No
     try:
         if language:
             translated_message = gpt.translate_with_gpt4_langchain(
-                message, cost_info, language).translated_message
+                message, cost_info, language).get('translated_message')
             message = translated_message if translated_message else message
         data = {
             "messaging_product": "whatsapp",

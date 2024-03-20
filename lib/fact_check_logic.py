@@ -24,17 +24,20 @@ def initial_fact_checking(claim, cost_info):
         return f"Exception occurred on initial fact-checking: {e}"
 
 
-def fact_check(message, cost_info):
+def fact_check(previous_user_messages, cost_info):
     """
     Process a fact-check request through initial fact-checking and deep analysis.
     """
+    # Parse previous user messages into 'last conversation messages: user(timestamp): <user_message_or_claims>; aibot(timestamp): <aibot_message>; sumup(timestamp): <conversation_sumup>; ...'
+    messages = serialize_last_messages(previous_user_messages)
+
     # Step 1: Initial Fact-Checking with Datasets/APIs
     # TODO: improve focusing on wikipedia AND https://toolbox.google.com/factcheck/apis OR WikipediaAPIWrapper!
-    fact_check_result = initial_fact_checking(message, cost_info)
+    fact_check_result = initial_fact_checking(messages, cost_info)
 
     # Step 2: Advanced Analysis with LLM (includes fecthinf urls)
     deep_analysis_result = gpt.analyse_claim(
-        message, fact_check_result, cost_info)
+        messages, fact_check_result, cost_info)
 
     # Step 3: Review analysis
     # TODO: Improve implementation with GPT-4 to confirm answer and provide a nuanced perspective
@@ -48,18 +51,17 @@ def fact_check(message, cost_info):
     }
 
 
-def fact_check_message(message, number, message_id, media_id, timestamp, cost_info, language=None):
+def fact_check_message(previous_user_messages, number, message_id, media_id, timestamp, cost_info, language=None):
     """function that process """
     # Check if new message exists
     if aws.confirm_if_new_msg(number, timestamp):
         return utils.create_api_response(400, 'newer message exists')
 
     # Fact-Checking
-    response = fact_check(message, cost_info)
+    response = fact_check(previous_user_messages, cost_info)
     logging.info(response)
-    logging.info(cost_info)
 
-    # Placeholder Step 9: Save data in DynamoDB Table:
+    # Placeholder Step 9: Sumup and save data in DynamoDB Table:
     aws.save_in_db(response, number, message_id, media_id, timestamp)
 
     # Send message to user

@@ -16,7 +16,7 @@ def is_repeted_message(message_id):
 
 def save_in_db(message, number, message_id, media_id, timestamp):
     """ Function that saves data into messages, users and costs tables """
-    # TODO: save message, user and costs - MESSAGES (id, phone number, threadId, message, cost)
+    # TODO: save message + sumup, user and costs - MESSAGES (id, phone number, threadId, message, cost)
     return
 
 
@@ -24,7 +24,7 @@ def get_last_user_message(number, timestamp, message_id):
     """ Function that gets last user messages """
     # TODO: fetch last 4 msg
     # if no sumup: create sumup with last 4 messages with timestamp 0.1s before to last message
-    # save_in_db (sumup if created) plus last user_message
+    # save_in_db (sumup if created) plus last user_message (except interactive_messages)
     # return least of: last 4 msg OR last msg up to -including- sumup msg
     return []
 
@@ -38,7 +38,7 @@ def confirm_if_new_msg(number, timestamp):
 def get_user_language(number):
     """ Function that gets user prefered language. Returns the language in string or None. """
     # TODO: ...
-    return None if number > 0 else 'English'
+    return None
 
 
 def change_user_language(number, language):

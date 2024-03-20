@@ -39,7 +39,8 @@ REVIEW_ANALYSIS_INSTRUCTION = '''Please review the provided assessment regarding
     removing any link that is not available or not relevant, providing an empty list.'''
 DEFAULT_SYSTEM_PROMPT = '''{INSTRUCTION} Format of the response should be a json (ready to be converted by json.loads)
     with these keys: {JSON_KEYS} Previous fact-check: {FACT_CHECK}'''
-DEFAULT_USER_PROMPT = "Original Claim: {MESSAGE}"
+DEFAULT_USER_PROMPT = '''Last messages and user claim (format: 'last conversation messages:
+    user(timestamp): <user_message_or_claims>; aibot(timestamp): <aibot_message>; sumup(timestamp): <conversation_sumup>; ...'): {MESSAGE}'''
 
 
 def clean_and_convert_to_json(input_str):

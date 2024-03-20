@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_community.callbacks import get_openai_callback
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.schema import HumanMessage, SystemMessage
 from langchain.agents import AgentType, initialize_agent, load_tools
 from langchain.agents.format_scratchpad.openai_tools import (
     format_to_openai_tool_messages,
@@ -185,7 +184,7 @@ def translate_with_gpt4_langchain(message, cost_info, language):
         [
             SystemMessagePromptTemplate.from_template(
                 utils.TRANSLATE),
-            HumanMessagePromptTemplate.from_template({'MESSAGE'})
+            HumanMessagePromptTemplate.from_template('{MESSAGE}')
         ]
     )
     messages = messages_template.partial(
@@ -194,22 +193,24 @@ def translate_with_gpt4_langchain(message, cost_info, language):
     return gpt4_request(messages, cost_info)
 
 
-def categorize_with_gpt4_langchain(message, cost_info, previous_user_message='none'):
+def categorize_with_gpt4_langchain(message, cost_info, previous_user_message='None'):
     """
-    Categorize the user message LangChain with an OpenAI model. Output: {value: GREETINGS | FACTCHECK}
+    Categorize the user message LangChain with an OpenAI model. Output: {value: GREETINGS | FACTCHECK | LANGUAGE}
     """
-    # set message
-    previous_user_message = str(previous_user_message)
-    messages_template = ChatPromptTemplate.from_messages(
-        [
-            SystemMessagePromptTemplate.from_template(
-                utils.CATEGORIZE_USER_MESSAGE),
-            HumanMessagePromptTemplate.from_template({'MESSAGE'})
-        ]
-    )
-    messages = messages_template.partial(
-        PREVIOUS_USER_MESSAGES=previous_user_message,
-        CATEGORIZE_USER_MESSAGE_JSON_KEYS=utils.CATEGORIZE_USER_MESSAGE_JSON_KEYS,
-        MESSAGE=message).format_messages()
-
+    try:
+        # set message
+        previous_user_message = str(previous_user_message)
+        messages_template = ChatPromptTemplate.from_messages(
+            [
+                SystemMessagePromptTemplate.from_template(
+                    utils.CATEGORIZE_USER_MESSAGE),
+                HumanMessagePromptTemplate.from_template('{MESSAGE}')
+            ]
+        )
+        messages = messages_template.partial(
+            PREVIOUS_USER_MESSAGES=previous_user_message,
+            CATEGORIZE_USER_MESSAGE_JSON_KEYS=utils.CATEGORIZE_USER_MESSAGE_JSON_KEYS,
+            MESSAGE=message).format_messages()
+    except Exception as e:
+        print('error', e)
     return gpt4_request(messages, cost_info)
