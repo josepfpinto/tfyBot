@@ -48,7 +48,7 @@ def process_message(body):
                     return whatsapp.send_message(number, '', cost_info, 'interactive_more_menu', language)
                 elif category.get('value') == 'LANGUAGE':
                     logging.info('LANGUAGE')
-                    if aws.change_user_language(number, language):
+                    if aws.change_user_language(number, final_message):
                         language = aws.get_user_language(number)
                         return whatsapp.send_message(number, 'Language changed', cost_info, 'interactive_main_menu', language)
                     else:

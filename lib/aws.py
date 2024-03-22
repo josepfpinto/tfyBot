@@ -41,7 +41,7 @@ def get_user_language(number):
     return None
 
 
-def change_user_language(number, language):
+def change_user_language(number, message):
     """ Function that changes the user prefered language. Returns true or false, depending on the request success. """
     # TODO: ...
     return True
