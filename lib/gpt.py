@@ -14,14 +14,20 @@ from langchain.agents import AgentExecutor
 from langchain.prompts import HumanMessagePromptTemplate, SystemMessagePromptTemplate
 from . import utils
 from . import shell_tool
-from . import websearch_tool
+from .tools import websearch_tools
 
 # Load environment variables
 load_dotenv()
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 
-def get_llm(max_tokens):
+def get_llm3(max_tokens):
+    """Function to create ChatOpenAI llm"""
+    return ChatOpenAI(temperature=0.3, api_key=OPENAI_API_KEY,
+                      model_name="gpt-3.5-turbo", max_tokens=max_tokens)
+
+
+def get_llm4(max_tokens):
     """Function to create ChatOpenAI llm"""
     return ChatOpenAI(temperature=0.3, api_key=OPENAI_API_KEY,
                       model_name="gpt-4", max_tokens=max_tokens)
@@ -32,26 +38,16 @@ def get_terminal(llm):
     return load_tools(["terminal"], llm=llm)[0]
 
 
-def gpt4_request(messages, cost_info=[], max_tokens=0):
-    """Function to make requests to gpt4"""
+def gpt_request(llm, messages, max_tokens=0):
+    """Function to make requests to gpt"""
     # If leveraging dialogue over several turns, you might update the context here
     # chat_gpt.update_context(...) # This method might vary depending on LangChain's future updates
-
-    # confirm max tokens
-    max_tokens = utils.get_dynamic_max_tokens(
-        max_tokens, messages[0] + messages[1])
-
-    # Setup for LangChain
-    llm = get_llm(max_tokens)
 
     # Use the chat model to generate a response based on the conversation history
     with get_openai_callback() as cb:
         response = llm.invoke(messages, max_tokens=max_tokens)
 
     try:
-        # Calculate cost
-        cost_info.append(utils.calculate_cost(
-            utils.RequestType.GPT, cb.total_tokens, cb.total_cost))
         # Extracting and returning the generated text from the response
         return utils.clean_and_convert_to_json(response.content)
     except (AttributeError, IndexError, TypeError) as e:
@@ -59,7 +55,7 @@ def gpt4_request(messages, cost_info=[], max_tokens=0):
         return utils.clean_and_convert_to_json('{"Error": "No response generated from llm."}')
 
 
-def gpt4_request_with_web_search(instruction, user_message, previous_check='', cost_info=[], search_tool=websearch_tool.search_brave, max_tokens=0):
+def gpt4_request_with_web_search(instruction, user_message, previous_check='', search_tool=websearch_tools.search_brave, max_tokens=0):
     """Function to make requests to gpt4 with web search"""
     # set message
     previous_check = str(previous_check)
@@ -78,11 +74,11 @@ def gpt4_request_with_web_search(instruction, user_message, previous_check='', c
         MESSAGE=user_message).format_messages()
 
     # confirm max tokens
-    max_tokens = utils.get_dynamic_max_tokens(
+    final_max_tokens = utils.get_dynamic_max_tokens(
         max_tokens, messages[0].content + messages[1].content)
 
     # Setup for LangChain
-    llm = get_llm(max_tokens)
+    llm = get_llm4(final_max_tokens)
     terminal = get_terminal(llm)
 
     # initialize the agent
@@ -95,9 +91,6 @@ def gpt4_request_with_web_search(instruction, user_message, previous_check='', c
     logging.info(response)
 
     try:
-        # Calculate cost
-        cost_info.append(utils.calculate_cost(
-            utils.RequestType.GPT, cb.total_tokens, cb.total_cost))
         return response
     except (AttributeError, IndexError, TypeError) as e:
         print(e)
@@ -105,7 +98,7 @@ def gpt4_request_with_web_search(instruction, user_message, previous_check='', c
 
 
 # Not yet working...
-def gpt4_request_with_web_search_2(instruction, user_message, previous_check='', cost_info=[], search_tool=websearch_tool.search_brave, max_tokens=0):
+def gpt4_request_with_web_search_2(instruction, user_message, previous_check='', search_tool=websearch_tools.search_brave, max_tokens=0):
     """Function to make requests to gpt4 with web search"""
     # set message
     messages_template = ChatPromptTemplate.from_messages(
@@ -123,11 +116,11 @@ def gpt4_request_with_web_search_2(instruction, user_message, previous_check='',
         FACT_CHECK=previous_check)
 
     # confirm max tokens
-    max_tokens = utils.get_dynamic_max_tokens(
+    final_max_tokens = utils.get_dynamic_max_tokens(
         max_tokens, messages[0] + messages[1])
 
     # Setup for LangChain
-    llm = get_llm(max_tokens)
+    llm = get_llm4(final_max_tokens)
     terminal = get_terminal(llm)
 
     # initialize the agent
@@ -152,30 +145,27 @@ def gpt4_request_with_web_search_2(instruction, user_message, previous_check='',
     logging.info(response)
 
     try:
-        # Calculate cost
-        cost_info.append(utils.calculate_cost(
-            utils.RequestType.GPT, cb.total_tokens, cb.total_cost))
         return utils.clean_and_convert_to_json(response)
     except (AttributeError, IndexError, TypeError) as e:
         print(e)
         return utils.clean_and_convert_to_json('{"Error": "No response generated from ChatGPT."}')
 
 
-def analyse_claim(claim, previous_step_result, cost_info):
+def analyse_claim(claim, previous_step_result):
     """
     Further analyse the claim using LangChain with an OpenAI model.
     """
-    return gpt4_request_with_web_search(utils.ANALYSE_USER_MESSAGE, claim, previous_step_result, cost_info)
+    return gpt4_request_with_web_search(utils.ANALYSE_USER_MESSAGE, claim, previous_step_result)
 
 
-def review_previous_analysis(claim, previous_step_result, cost_info):
+def review_previous_analysis(claim, previous_step_result):
     """
     Review the previous analysis of a claim using LangChain with an OpenAI model.
     """
-    return gpt4_request_with_web_search(utils.REVIEW_ANALYSIS_INSTRUCTION, claim, previous_step_result, cost_info)
+    return gpt4_request_with_web_search(utils.REVIEW_ANALYSIS_INSTRUCTION, claim, previous_step_result)
 
 
-def translate_with_gpt4_langchain(message, cost_info, language):
+def translate_with_gpt3_langchain(message, language):
     """
     Translate a claim using LangChain with an OpenAI model. Output: {translated_message: string}
     """
@@ -189,28 +179,70 @@ def translate_with_gpt4_langchain(message, cost_info, language):
     )
     messages = messages_template.partial(
         LANGUAGE=language,
+        TRANSLATE_JSON_KEYS=utils.TRANSLATE_JSON_KEYS,
         MESSAGE=message).format_messages()
-    return gpt4_request(messages, cost_info)
+
+    # confirm max tokens
+    final_max_tokens = utils.get_dynamic_max_tokens(
+        utils.MAX_TOKENS, messages[0] + messages[1])
+
+    # Setup for LangChain
+    llm = get_llm3(final_max_tokens)
+
+    return gpt_request(llm, messages, final_max_tokens)
 
 
-def categorize_with_gpt4_langchain(message, cost_info, previous_user_message='None'):
+def summarize_with_gpt3_langchain(text, char_limit):
+    """
+    Translate a claim using LangChain with an OpenAI model. Output: {summarized_message: string}
+    """
+    # set message
+    messages_template = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(utils.SUMMARIZE),
+            SystemMessagePromptTemplate.from_template('{TEXT}')
+        ]
+    )
+    messages = messages_template.partial(
+        CHAR_LIMIT=char_limit,
+        SUMMARIZE_JSON_KEYS=utils.SUMMARIZE_JSON_KEYS,
+        TEXT=text).format_messages()
+
+    # confirm max tokens
+    final_max_tokens = utils.get_dynamic_max_tokens(
+        utils.MAX_TOKENS, messages[0] + messages[1])
+
+    # Setup for LangChain
+    llm = get_llm3(final_max_tokens)
+
+    return gpt_request(llm, messages, final_max_tokens)
+
+
+def categorize_with_gpt4_langchain(message, chat_history):
     """
     Categorize the user message LangChain with an OpenAI model. Output: {value: GREETINGS | FACTCHECK | LANGUAGE}
     """
     try:
-        # set message
-        previous_user_message = str(previous_user_message)
+        # set messages
         messages_template = ChatPromptTemplate.from_messages(
             [
                 SystemMessagePromptTemplate.from_template(
                     utils.CATEGORIZE_USER_MESSAGE),
+                chat_history,
                 HumanMessagePromptTemplate.from_template('{MESSAGE}')
             ]
         )
         messages = messages_template.partial(
-            PREVIOUS_USER_MESSAGES=previous_user_message,
             CATEGORIZE_USER_MESSAGE_JSON_KEYS=utils.CATEGORIZE_USER_MESSAGE_JSON_KEYS,
             MESSAGE=message).format_messages()
     except Exception as e:
         print('error', e)
-    return gpt4_request(messages, cost_info)
+
+    # confirm max tokens
+    final_max_tokens = utils.get_dynamic_max_tokens(
+        utils.MAX_TOKENS, messages[0] + messages[1])
+
+    # Setup for LangChain
+    llm = get_llm4(final_max_tokens)
+
+    return gpt_request(llm, messages, final_max_tokens)

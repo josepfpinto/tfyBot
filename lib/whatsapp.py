@@ -109,12 +109,12 @@ def send_template_message(recipient, template="hello_world"):
         return e, 403
 
 
-def send_message(recipient, message, cost_info, message_type='text', language=None):
+def send_message(recipient, message, message_type='text', language=None):
     """send message to Whatsapp"""
     try:
         if language:
             translated_message = gpt.translate_with_gpt4_langchain(
-                message, cost_info, language).get('translated_message')
+                message, language).get('translated_message')
             message = translated_message if translated_message else message
         data = {
             "messaging_product": "whatsapp",

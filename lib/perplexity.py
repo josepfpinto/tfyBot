@@ -13,7 +13,7 @@ PERPLEXITY_API_KEY = os.getenv('PERPLEXITY_API_KEY')
 llm = OpenAI(api_key=PERPLEXITY_API_KEY, base_url="https://api.perplexity.ai")
 
 
-def perplexity_request(messages, cost_info, max_tokens=200):
+def perplexity_request(messages, max_tokens=200):
     """Function to analyze complexity with Perplexity API"""
 
     # chat completion without streaming
@@ -24,16 +24,13 @@ def perplexity_request(messages, cost_info, max_tokens=200):
     )
 
     try:
-        # Calculate cost
-        cost_info.append(utils.calculate_cost(utils.RequestType.PERPLEXITY, response.usage.total_tokens,
-                         0, response.usage.prompt_tokens, response.usage.completion_tokens))
         # Extracting and returning the generated text from the response
         return response.choices[0].message.content
     except (AttributeError, IndexError, TypeError):
         return "No response generated from perplexity."
 
 
-def deep_analysis_with_perplexity(claim, previous_step_result, cost_info):
+def deep_analysis_with_perplexity(claim, previous_step_result):
     """
     Perform complexity analysis on a claim using the Perplexity API, 
     considering previous steps' output.
@@ -56,7 +53,7 @@ def deep_analysis_with_perplexity(claim, previous_step_result, cost_info):
     ]
     # response = perplexity_request_with_web_search(previous_result_str, claim)
     response = perplexity_request(
-        messages, cost_info, max_tokens=utils.get_dynamic_max_tokens(claim))
+        messages, max_tokens=utils.get_dynamic_max_tokens(claim))
     try:
         return utils.clean_and_convert_to_json(response)
     except Exception as e:

@@ -1,28 +1,42 @@
+import logging
 from langchain.agents import AgentExecutor, create_openai_tools_agent
-from langchain_core.messages import BaseMessage, HumanMessage
+from langchain_core.messages import AIMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_openai import ChatOpenAI
-from pprint import pprint
+from langchain_community.chat_message_histories import (
+    DynamoDBChatMessageHistory,
+)
 
 
 def create_agent(llm: ChatOpenAI, tools: list, system_prompt: str):
-    # Each worker node will be given a name and some tools.
+    """Create an agent"""
     prompt = ChatPromptTemplate.from_messages(
         [
-            (
-                "system",
-                system_prompt,
-            ),
+            ("system", system_prompt),
+            MessagesPlaceholder(variable_name="history", optional=True),
             MessagesPlaceholder(variable_name="messages"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ]
     )
-    agent = create_openai_tools_agent(llm, tools, prompt)
-    executor = AgentExecutor(agent=agent, tools=tools)
+
+    agent_with_tools = create_openai_tools_agent(llm, tools, prompt)
+    agent_with_tools_and_history = RunnableWithMessageHistory(
+        agent_with_tools,
+        lambda session_id: DynamoDBChatMessageHistory(
+            table_name="SessionTable", session_id=session_id
+        ),
+        input_messages_key="messages",
+        history_messages_key="history",
+    )
+    executor = AgentExecutor(agent=agent_with_tools_and_history, tools=tools)
     return executor
 
 
 def agent_node(state, agent, name):
-    print("\n, We are inside AGENT -> ", name, " :")
-    pprint(state, '\n')
-    result = agent.invoke(state)
-    return {"messages": [HumanMessage(content=result["output"], name=name)]}
+    """Deploy Agent"""
+    logging.info("\nWe are inside AGENT %s:", name)
+    logging.info('%s\n', state)
+    config = {"configurable": {"session_id": state.get('number')}}
+    result = agent.invoke(state, config=config)
+    return {"messages": [AIMessage(content=result["output"], name=name)]}

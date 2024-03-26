@@ -17,17 +17,25 @@ class RequestType:
     PERPLEXITY = 'PERPLEXITY'
 
 
+HISTORY_CHAR_LIMMIT = 3500
+MAX_TOKENS = 0
+
 CATEGORIZE_USER_MESSAGE_JSON_KEYS = '''{value: <GREETINGS | LANGUAGE | FACTCHECK>}'''
-CATEGORIZE_USER_MESSAGE = '''Categorize incoming messages from users into three categories: GREETINGS, LANGUAGE or FACTCHECK.
-    If a message contains the name of a language, categorize it as LANGUAGE.
-    Else, if a message is a simple greeting or doesn't clearly require fact-checking, categorize it as GREETINGS. 
+CATEGORIZE_USER_MESSAGE = '''Categorize the last message from a user into three categories: GREETINGS, LANGUAGE or FACTCHECK.
+    If the message contains the name of a language, categorize it as LANGUAGE.
+    Else, if the message is a simple greeting or doesn't clearly require fact-checking, categorize it as GREETINGS. 
     Otherwise, if it contains information (or partial information) that might require verification, categorize it as FACTCHECK. 
-    Previous messages from user: {PREVIOUS_USER_MESSAGES}. Format of the response should be a json (ready to be converted by json.loads) 
+    For context, the previous messages exchanged with the user were also included.
+    Format of the response should be a json (ready to be converted by json.loads) 
     with these keys: {CATEGORIZE_USER_MESSAGE_JSON_KEYS}'''
 
 TRANSLATE_JSON_KEYS = '''{translated_message: <translated message | empty string>}'''
 TRANSLATE = '''If necessary, translate the user message to {LANGUAGE}. If no translation is necessary send an empty string.
     Format of the response should be a json (ready to be converted by json.loads) with these keys: {TRANSLATE_JSON_KEYS}'''
+
+SUMMARIZE_JSON_KEYS = '''{summarized_message: <summarized message>}'''
+SUMMARIZE = '''Summarize the following chat history up to a max of {CHAR_LIMIT} chars.
+    Format of the response should be a json (ready to be converted by json.loads) with these keys: {SUMMARIZE_JSON_KEYS}'''
 
 JSON_KEYS = '''{truthfulness: <FALSE | PROBABLY FALSE | PROBABLY TRUE | TRUE>, explanation: <Clear, plain language explanation>, links: <List of current, verified evidence links or an empty list if none apply>}'''
 ANALYSE_USER_MESSAGE = '''Analyse the content of the user claim and provide an assessment of its truthfulness

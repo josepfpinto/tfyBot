@@ -5,23 +5,21 @@ from lib.fact_check_logic import initial_fact_checking
 from lib import gpt
 from lib.whatsapp import send_template_message, send_message
 from dotenv import load_dotenv
-from lib.main_logic_graph import main_logic_graph
+from fact_check_graph.start import main_logic_graph
 
 load_dotenv()
-cost_info = []
 DUMMY_MESSAGE = "Olives make you fat"
 WHATSAPP_RECIPIENT_WAID = os.getenv("WHATSAPP_RECIPIENT_WAID")
 number = '351xxxxxxxxx'
 
-# print(send_message(number, 'test response 2', cost_info, 'text'))
+# print(send_message(number, 'test response 2', 'text'))
 
-# fact_check_result = initial_fact_checking(DUMMY_MESSAGE, cost_info)
+# fact_check_result = initial_fact_checking(DUMMY_MESSAGE)
 # search_response = gpt.analyse_claim(
-#     DUMMY_MESSAGE, fact_check_result, cost_info)
+#     DUMMY_MESSAGE, fact_check_result)
 # print('search response')
 # print(search_response)
-# print(cost_info)
 
-
-inputs = {"messages": [HumanMessage(content="what is the weather in lisbon?")]}
+inputs = "Search for the latest Ai technology in 2024, summarise the content. After summarising pass it on to insihgt researcher to provide insights for each topic."
+# inputs = {"messages": [HumanMessage(content="Search for the latest Ai technology in 2024, summarise the content. After summarising pass it on to insihgt researcher to provide insights for each topic.")]}
 main_logic_graph.invoke(inputs)
