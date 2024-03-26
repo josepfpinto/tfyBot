@@ -45,7 +45,7 @@ def supervisor_chain(agents):
     )
 
 
-members = ["Fact_Checker", "Reviewer"]
+members = ["Fact_Checker", "Reviewer", "Editor"]
 supervisor_chain = supervisor_chain(members)
 
 

@@ -3,6 +3,7 @@ import logging
 from langgraph.graph import StateGraph, END
 from ..agents.reviewer_node import reviewer_node
 from ..agents.factchecker_node import factchecker_node
+from ..agents.editor_node import editor_node
 from ..agents.supervisor import supervisor, members
 from .state import AgentState
 from .router import router
@@ -11,6 +12,7 @@ from .router import router
 workflow = StateGraph(AgentState)
 workflow.add_node("Reviewer", reviewer_node)
 workflow.add_node("Fact_Checker", factchecker_node)
+workflow.add_node("Editor", editor_node)
 workflow.add_node("Supervisor", supervisor)
 
 for member in members:
