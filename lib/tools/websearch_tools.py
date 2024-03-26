@@ -1,3 +1,5 @@
+"""Websearch tools available"""
+import logging
 import os
 from dotenv import load_dotenv
 import requests
@@ -16,23 +18,27 @@ SERPER_API_KEY = os.getenv('SERPER_API_KEY')
 BRAVE_API_KEY = os.getenv('BRAVE_API_KEY')
 
 # List of tools
-tavily_tool = [TavilySearchResults(
-    api_wrapper=TavilySearchAPIWrapper(), max_results=2)]
+tavily_tool = TavilySearchResults(
+    api_wrapper=TavilySearchAPIWrapper(), max_results=1)
 search_serper = Tool(
     name="Google Search",
-    func=GoogleSerperAPIWrapper(serper_api_key=SERPER_API_KEY, k=2).results,
+    func=GoogleSerperAPIWrapper(serper_api_key=SERPER_API_KEY, k=1).results,
     description="Access to google search. Use this to obtain information about current events, to find support links, or to get info on how to write code.",
 )
-search_brave = tool = BraveSearch.from_api_key(
-    api_key=BRAVE_API_KEY, search_kwargs={"count": 2})
+search_brave = BraveSearch.from_api_key(
+    api_key=BRAVE_API_KEY, search_kwargs={"count": 1})
 
 
 @tool("process_content", return_direct=False)
 def process_content(url: str) -> str:
-    """Processes content from a webpage."""
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    return soup.get_text()
+    """Processes content from a webpage"""
+    try:
+        response = requests.get(url,  timeout=15)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        return soup.get_text()
+    except Exception as e:
+        logging.error("Failed to process content from %s: %s", url, e)
+        return "Error processing content"
 
 
 tools = [tavily_tool, process_content]

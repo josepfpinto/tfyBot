@@ -45,14 +45,12 @@ from .fact_check_graph.start import graph
 #     }
 
 
-def construct_initial_state_with_history(chat_history, additional_state_info):
+def construct_initial_state_with_history(chat_history):
     initial_state = {
         "messages": [SystemMessage(
-            content="Factcheck last user message(s)")]
-        ** additional_state_info
+            content="Factcheck last user message(s)")],
+        "history": chat_history if chat_history else []
     }
-    if chat_history:
-        initial_state["history"] = chat_history
     return initial_state
 
 
@@ -60,14 +58,11 @@ def fact_check_message(number, message_id, media_id, timestamp, language=None):
     """function that process """
     # Confirm if new message has arrived
     if aws.confirm_if_new_msg(number, timestamp):
-        return None
+        return None  # Correct output? How to deal with this?
 
     # Set initial state
     chat_history = aws.get_chat_history(number)
-    additional_state_info = {"messages": [
-        SystemMessage(content="Factcheck last user message(s)")]}
-    initial_state = construct_initial_state_with_history(
-        chat_history, additional_state_info)
+    initial_state = construct_initial_state_with_history(chat_history)
 
     # Fact Check
     response = graph.invoke(initial_state)

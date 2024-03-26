@@ -1,3 +1,4 @@
+"""Tools creation"""
 import json
 from langgraph.prebuilt import ToolExecutor, ToolInvocation
 from langchain_core.messages import FunctionMessage
@@ -29,5 +30,6 @@ def deploy_tool(state, tool_executor):
 
 
 def create_tool(state, tools):
+    """Tool deploy function"""
     tool_executor = ToolExecutor(tools)
     return deploy_tool(state, tool_executor)

@@ -3,7 +3,7 @@ import logging
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 import boto3
 from boto3.dynamodb.conditions import Key
-from gpt import summarize_with_gpt3_langchain
+from .gpt import summarize_with_gpt3_langchain
 from . import utils
 
 # DYNAMODB TABLES

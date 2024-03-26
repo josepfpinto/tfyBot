@@ -17,8 +17,18 @@ class RequestType:
     PERPLEXITY = 'PERPLEXITY'
 
 
+WHATSAPP_CHAR_LIMMIT = 350
 HISTORY_CHAR_LIMMIT = 3500
 MAX_TOKENS = 0
+
+SUPERVISOR_PROMPT = '''As a Supervisor of a fact checker bot, your role is to oversee
+        a dialogue between these workers: {AGENTS}.
+        Based on the user's request and chat history, 
+        determine which worker should take the next action. Each worker is responsible for
+        executing a specific task and reporting back their findings and progress.
+        Once all tasks are complete, indicate with 'FINISH'.'''
+SUPERVISOR_QUESTION = '''Given the conversation above, who should act next?
+        Or should we FINISH? Select one of: {OPTIONS}'''
 
 CATEGORIZE_USER_MESSAGE_JSON_KEYS = '''{value: <GREETINGS | LANGUAGE | FACTCHECK>}'''
 CATEGORIZE_USER_MESSAGE = '''Categorize the last message from a user into three categories: GREETINGS, LANGUAGE or FACTCHECK.
@@ -37,14 +47,32 @@ SUMMARIZE_JSON_KEYS = '''{summarized_message: <summarized message>}'''
 SUMMARIZE = '''Summarize the following chat history up to a max of {CHAR_LIMIT} chars.
     Format of the response should be a json (ready to be converted by json.loads) with these keys: {SUMMARIZE_JSON_KEYS}'''
 
-JSON_KEYS = '''{truthfulness: <FALSE | PROBABLY FALSE | PROBABLY TRUE | TRUE>, explanation: <Clear, plain language explanation>, links: <List of current, verified evidence links or an empty list if none apply>}'''
-ANALYSE_USER_MESSAGE = '''Analyse the content of the user claim and provide an assessment of its truthfulness
-    in simple and plain language using your own knowledge and websearch, indicating the probability of being true
-    or false and the reasoning behind this assessment, together with verified existing links that support this assessment. 
-    If no suitable links are available or the existing ones cannot be verified, provide an empty list of links.'''
-REVIEW_ANALYSIS_INSTRUCTION = '''Please review the provided assessment regarding the truthfulness of a user's claim.
-    Adjust the assessment if necessary, ensuring accuracy and objectivity. Verify the functionality and relevance of the supplied links list, 
-    removing any link that is not available or not relevant, providing an empty list.'''
+ANALYSE_USER_MESSAGE = ''' You are a Fact Checker Agent. Your task involves analyzing user claims in a chat conversation step by step.
+        Based on this chat conversation with an user and other ai agents, analyse the content of the user claim(s) and provide an assessment of its truthfulness.
+        1. Identify up to 3 topics from the user's message. 
+        2. Conduct internet searches on each topic, one at a time.
+        3. Assess the truthfulness of the claims, categorizing them as FALSE, PROBABLY FALSE, PROBABLY TRUE, or TRUE. And provide
+        a straightforward explanation for your assessment, supported by up to 3 credible sources. If reliable sources are not available, state so.
+        Ensure your final response is concise and based on factual evidence.
+        '''
+REVIEW_ANALYSIS_INSTRUCTION = '''You are a Reviewer Agent tasked with evaluating the Fact Checker Agent's analysis of user claims.
+        Based on this chat conversation with an user and other ai agents, please review the provided assessment from Fact Checker Agent
+        regarding the truthfulness of the user claim(s).
+        1. Cross-check the accuracy and objectivity of the assessment using a different source.
+        2. If you find discrepancies or inaccuracies, explain why the original assessment might be incorrect, providing a new source for reference.
+        3. If the assessment holds true, validate its correctness with an explanation and a supporting source.
+        Your review should ensure the assessment is both accurate and impartial.
+        '''
+
+EDITOR_INSTRUCTION = f''' You are an Editor Agent, responsible for finalizing the assessments made by both the Fact Checker Agent and the Reviewer Agent regarding user claims.
+        1. Evaluate the quality and bias of the assessments. If you identify any issues, explain the shortcomings.
+        2. Confirm the validity and relevance of all cited sources, removing any that are unsuitable.
+        3. Craft a WhatsApp message to the user with a friendly greeting, a concise verdict (False, Probably False, Probably True, True),
+        a summary of findings, and links to up to 3 verified sources. Keep your message under {WHATSAPP_CHAR_LIMMIT} characters.
+        Your role is to ensure the final message is clear, unbiased, and user-friendly.
+        '''
+
+
 DEFAULT_SYSTEM_PROMPT = '''{INSTRUCTION} Format of the response should be a json (ready to be converted by json.loads)
     with these keys: {JSON_KEYS} Previous fact-check: {FACT_CHECK}'''
 DEFAULT_USER_PROMPT = '''Last messages and user claim (format: 'last conversation messages:

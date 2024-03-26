@@ -3,7 +3,7 @@ import logging
 from .fact_check_logic import fact_check_message
 from . import whatsapp, aws, utils, gpt
 
-# List to store cost information
+logging.basicConfig(level=logging.INFO)
 DUMMY_MESSAGE = "olives make you fat"
 
 

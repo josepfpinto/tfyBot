@@ -7,7 +7,7 @@ from .. import utils
 
 llm = ChatOpenAI(model="gpt-4", streaming=True)
 
-factchecker_agent = create_agent(
-    llm, websearch_tools.tools, utils.ANALYSE_USER_MESSAGE)
-factchecker_node = functools.partial(
-    agent_node, agent=factchecker_agent, name="Fact_Checker")
+editor_agent = create_agent(
+    llm, websearch_tools.tools, utils.EDITOR_INSTRUCTION)
+editor_node = functools.partial(
+    agent_node, agent=editor_agent, name="Editor")

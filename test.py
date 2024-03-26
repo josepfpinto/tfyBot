@@ -1,11 +1,13 @@
 """Testing"""
-from langchain_core.messages import HumanMessage
+import logging
 import os
-from lib.fact_check_logic import initial_fact_checking
+from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage, SystemMessage
 from lib import gpt
 from lib.whatsapp import send_template_message, send_message
-from dotenv import load_dotenv
-from fact_check_graph.start import main_logic_graph
+from lib.fact_check_graph.start import graph
+
+logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 DUMMY_MESSAGE = "Olives make you fat"
@@ -20,6 +22,11 @@ number = '351xxxxxxxxx'
 # print('search response')
 # print(search_response)
 
-inputs = "Search for the latest Ai technology in 2024, summarise the content. After summarising pass it on to insihgt researcher to provide insights for each topic."
-# inputs = {"messages": [HumanMessage(content="Search for the latest Ai technology in 2024, summarise the content. After summarising pass it on to insihgt researcher to provide insights for each topic.")]}
-main_logic_graph.invoke(inputs)
+initial_state = {
+    "messages": [HumanMessage(content=DUMMY_MESSAGE)],
+    "history": []
+}
+response = graph.invoke(initial_state)
+final_message_content = response.get("messages")[0].content
+print('response: %s', response)
+print('final_message_content: %s', final_message_content)
