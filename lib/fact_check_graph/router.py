@@ -1,9 +1,11 @@
 """Router"""
-import logging
+from .. import logger
+
+this_logger = logger.configure_logging('ROUTER')
 
 
 def router(state):
     '''Router'''
-    logging.info("\nWe are inside ROUTER: ")
-    logging.info(state, '\n')
+    this_logger.info("\nWe are inside ROUTER: ")
+    this_logger.info('%s\n', state)
     return state["next"]

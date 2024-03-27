@@ -1,10 +1,12 @@
 """Main fact check logic"""
-import logging
 import requests
 from langchain_core.messages import SystemMessage
 from . import gpt
-from . import whatsapp, aws, utils
+from . import aws, utils, logger
 from .fact_check_graph.start import graph
+from whatsapp import whatsapp
+
+this_logger = logger.configure_logging('FACT_CHECK_LOGIC')
 
 
 # def initial_fact_checking(claim):
@@ -67,8 +69,8 @@ def fact_check_message(number, message_id, media_id, timestamp, language=None):
     # Fact Check
     response = graph.invoke(initial_state)
     final_message_content = response.get("messages")[0].content
-    logging.info('response: %s', response)
-    logging.info('final_message_content: %s', final_message_content)
+    this_logger.info('response: %s', response)
+    this_logger.info('final_message_content: %s', final_message_content)
 
     # Sumup and save data in DynamoDB Table:
     aws.save_in_db(final_message_content, number,

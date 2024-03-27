@@ -2,11 +2,14 @@
 import json
 from langgraph.prebuilt import ToolExecutor, ToolInvocation
 from langchain_core.messages import FunctionMessage
+from .. import logger
+
+this_logger = logger.configure_logging('TOOLS')
 
 
 def deploy_tool(state, tool_executor):
     """Tool deploy function"""
-    print(f"\nDeploying Tool\n")
+    this_logger.info("\nDeploying Tool\n")
 
     messages = state['messages']
     last_message = messages[-1]

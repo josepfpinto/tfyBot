@@ -1,9 +1,10 @@
 """Useful classes and functions"""
-import logging
 import json
 import re
-import sys
 from flask import jsonify
+from . import logger
+
+this_logger = logger.configure_logging('UTILS')
 
 
 class RequestType:
@@ -26,6 +27,13 @@ SUPERVISOR_PROMPT = '''As a Supervisor of a fact checker bot, your role is to ov
         Based on the user's request and chat history, 
         determine which worker should take the next action. Each worker is responsible for
         executing a specific task and reporting back their findings and progress.
+        The Fact_Checker Agent should be the first to engadge as he is responsible
+        for correctly fact check the user message, then the Reviewer Agent should confirm
+        or not the Fact_Checker Agent assumption. If he doesn't Fact_Checker Agent should
+        repeat the search 1 more time.
+        In the end, having an agreement or not between Fact_Checker Agent and Reviewer Agent,
+        the result should be presented to the Editor Agent that will create the
+        final message to be sent to the user, based on the previous findings.
         Once all tasks are complete, indicate with 'FINISH'.'''
 SUPERVISOR_QUESTION = '''Given the conversation above, who should act next?
         Or should we FINISH? Select one of: {OPTIONS}'''
@@ -94,7 +102,7 @@ def clean_and_convert_to_json(input_str):
 
         return cleaned_data
     except json.JSONDecodeError as e:
-        logging.error("Error decoding JSON: %s", e)
+        this_logger.error("Error decoding JSON: %s", e)
         return {}
 
 
@@ -154,11 +162,3 @@ def get_dynamic_max_tokens(max_tokens, messages):
     if max_tokens == 0:
         return 200 + len(messages) // 10
     return max_tokens
-
-
-def configure_logging():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        stream=sys.stdout,
-    )

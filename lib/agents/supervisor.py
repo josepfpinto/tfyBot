@@ -1,9 +1,10 @@
 """Agent Supervisor"""
-import logging
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-from .. import utils
+from .. import logger, utils
+
+this_logger = logger.configure_logging('SUPERVISOR')
 
 
 def supervisor_chain(agents):
@@ -51,7 +52,7 @@ supervisor_chain = supervisor_chain(members)
 
 def supervisor(state):
     """Deploy Supervisor"""
-    logging.info("\nWe are inside SUPERVISOR :")
-    logging.info(state, '\n')
+    this_logger.info("\nWe are inside SUPERVISOR :")
+    this_logger.info('%s\n', state)
     result = supervisor_chain.invoke(state)
     return result

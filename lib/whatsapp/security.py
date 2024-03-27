@@ -1,11 +1,12 @@
 import os
 from functools import wraps
 from flask import jsonify, request
-import logging
 import hashlib
 import hmac
 from dotenv import load_dotenv
+from .. import logger
 
+this_logger = logger.configure_logging('SECURITY')
 
 # Load environment variables
 load_dotenv()
@@ -39,7 +40,7 @@ def signature_required(f):
             7:
         ]  # Removing 'sha256='
         if not validate_signature(request.data.decode("utf-8"), signature):
-            logging.info("Signature verification failed!")
+            this_logger.info("Signature verification failed!")
             return jsonify({"status": "error", "message": "Invalid signature"}), 403
         return f(*args, **kwargs)
 

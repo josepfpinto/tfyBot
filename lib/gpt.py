@@ -1,6 +1,5 @@
 """GPT related functions"""
 import os
-import logging
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_community.callbacks import get_openai_callback
@@ -12,9 +11,10 @@ from langchain.agents.format_scratchpad.openai_tools import (
 from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 from langchain.agents import AgentExecutor
 from langchain.prompts import HumanMessagePromptTemplate, SystemMessagePromptTemplate
-from . import utils
-from . import shell_tool
-from .tools import websearch_tools
+from . import utils, logger
+from .tools import shell_tool, websearch_tools
+
+this_logger = logger.configure_logging('TOOLS')
 
 # Load environment variables
 load_dotenv()
@@ -51,7 +51,7 @@ def gpt_request(llm, messages, max_tokens=0):
         # Extracting and returning the generated text from the response
         return utils.clean_and_convert_to_json(response.content)
     except (AttributeError, IndexError, TypeError) as e:
-        print(e)
+        this_logger.error(e)
         return utils.clean_and_convert_to_json('{"Error": "No response generated from llm."}')
 
 
@@ -88,12 +88,12 @@ def gpt4_request_with_web_search(instruction, user_message, previous_check='', s
 
     with get_openai_callback() as cb:
         response = agent_chain.run(messages)
-    logging.info(response)
+    this_logger.info(response)
 
     try:
         return response
     except (AttributeError, IndexError, TypeError) as e:
-        print(e)
+        this_logger.error(e)
         return utils.clean_and_convert_to_json('{"Error": "No response generated from llm."}')
 
 
@@ -142,12 +142,12 @@ def gpt4_request_with_web_search_2(instruction, user_message, previous_check='',
 
     with get_openai_callback() as cb:
         response = agent_executor.invoke({"MESSAGE": user_message})
-    logging.info(response)
+    this_logger.info(response)
 
     try:
         return utils.clean_and_convert_to_json(response)
     except (AttributeError, IndexError, TypeError) as e:
-        print(e)
+        this_logger.error(e)
         return utils.clean_and_convert_to_json('{"Error": "No response generated from ChatGPT."}')
 
 
@@ -236,7 +236,7 @@ def categorize_with_gpt4_langchain(message, chat_history):
             CATEGORIZE_USER_MESSAGE_JSON_KEYS=utils.CATEGORIZE_USER_MESSAGE_JSON_KEYS,
             MESSAGE=message).format_messages()
     except Exception as e:
-        print('error', e)
+        this_logger.error('error %s', e)
 
     # confirm max tokens
     final_max_tokens = utils.get_dynamic_max_tokens(

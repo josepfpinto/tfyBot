@@ -1,26 +1,26 @@
 """main bot logic"""
-import logging
 from .fact_check_logic import fact_check_message
-from . import whatsapp, aws, utils, gpt
+from . import aws, utils, gpt, logger
+from whatsapp import whatsapp
 
-logging.basicConfig(level=logging.INFO)
+this_logger = logger.configure_logging('MAIN')
 DUMMY_MESSAGE = "olives make you fat"
 
 
 def handle_text_message(number, message, language):
     """Handles processing of text messages."""
-    logging.info('Processing text message.')
+    this_logger.info('Processing text message.')
     chat_history = aws.get_chat_history(number)
     category = gpt.categorize_with_gpt4_langchain(message, chat_history)
     if category.get('value') == 'GREETINGS':
-        logging.info('Greeting detected.')
+        this_logger.info('Greeting detected.')
         return whatsapp.send_message(number, '', 'interactive_welcome', language)
     elif category.get('value') == 'FACTCHECK':
-        logging.info('Fact-check requested.')
+        this_logger.info('Fact-check requested.')
         # Save message to DynamoDB here if necessary
         return whatsapp.send_message(number, '', 'interactive_more_menu', language)
     elif category.get('value') == 'LANGUAGE':
-        logging.info('Language change requested.')
+        this_logger.info('Language change requested.')
         if aws.change_user_language(number, message):
             language = aws.get_user_language(number)
             return whatsapp.send_message(number, 'Language changed.', 'interactive_main_menu', language)
@@ -32,7 +32,7 @@ def handle_text_message(number, message, language):
 
 def handle_interactive_message(number, interaction_id, message, message_id, media_id, timestamp, language):
     """Handles processing of interactive messages."""
-    logging.info('Processing interactive message.')
+    this_logger.info('Processing interactive message.')
     if interaction_id == "factcheck":
         return whatsapp.send_message(number, 'Ok then! Send your message and I’ll do my best to fact-check it. 😊', 'text', language)
     elif interaction_id == "buttonaddmore":
@@ -62,7 +62,7 @@ def process_message(body):
         timestamp = int(message.get('timestamp'))
         final_message, media_id, interaction_id, type_message = whatsapp.get_message(
             message)
-        logging.info(body)
+        this_logger.info(body)
 
         try:
             # Check for repeated messages
@@ -70,7 +70,7 @@ def process_message(body):
                 return utils.create_api_response(200, 'repeated message')
 
             language = aws.get_user_language(number)
-            logging.info('user language: %s', language)
+            this_logger.info('user language: %s', language)
 
             if type_message == 'text':
                 return handle_text_message(number, final_message, language)
@@ -85,9 +85,9 @@ def process_message(body):
             # Output: Transcribed text ready for further processing.
 
         except Exception as e:
-            logging.error('Failed to process WhatsApp message: %s', e)
+            this_logger.error('Failed to process WhatsApp message: %s', e)
             return utils.create_api_response(400, str(e))
 
     except Exception as e:
-        logging.error('Failed to parse WhatsApp message: %s', e)
+        this_logger.error('Failed to parse WhatsApp message: %s', e)
         return utils.create_api_response(400, str(e))

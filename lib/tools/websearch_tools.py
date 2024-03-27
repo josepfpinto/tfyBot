@@ -1,5 +1,4 @@
 """Websearch tools available"""
-import logging
 import os
 from dotenv import load_dotenv
 import requests
@@ -10,6 +9,9 @@ from langchain.agents.tools import Tool
 from langchain.tools import tool
 from langchain_community.tools.brave_search.tool import BraveSearch
 from bs4 import BeautifulSoup
+from .. import logger
+
+this_logger = logger.configure_logging('WEBSEARCH_TOOLS')
 
 # Load environment variables
 load_dotenv()
@@ -31,14 +33,14 @@ search_brave = BraveSearch.from_api_key(
 
 @tool("process_content", return_direct=False)
 def process_content(url: str) -> str:
-    """Processes content from a webpage"""
+    """Processes content from a webpage with a html.parser"""
     try:
         response = requests.get(url,  timeout=15)
         soup = BeautifulSoup(response.content, 'html.parser')
         return soup.get_text()
     except Exception as e:
-        logging.error("Failed to process content from %s: %s", url, e)
+        this_logger.error("Failed to process content from %s: %s", url, e)
         return "Error processing content"
 
 
-tools = [tavily_tool, process_content]
+tools = [search_brave, process_content]

@@ -1,9 +1,10 @@
 """Perplexity related functions"""
-import logging
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from . import utils
+from . import logger
+
+this_logger = logger.configure_logging('PERPLEXITY')
 
 # Load environment variables
 load_dotenv()
@@ -57,5 +58,5 @@ def deep_analysis_with_perplexity(claim, previous_step_result):
     try:
         return utils.clean_and_convert_to_json(response)
     except Exception as e:
-        logging.error(str(e))
+        this_logger.error(str(e))
         return "Failed to parse response from perplexity."

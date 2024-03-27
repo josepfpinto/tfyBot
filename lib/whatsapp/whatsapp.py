@@ -1,11 +1,12 @@
 """Whatsapp related functions"""
-import logging
 import json
 import os
 from dotenv import load_dotenv
 import requests
 from .whatsapp_messages import select_message_template
-from . import utils, gpt
+from .. import utils, gpt, logger
+
+this_logger = logger.configure_logging('WHATSAPP')
 
 # Load environment variables
 load_dotenv()
@@ -94,7 +95,7 @@ def send_template_message(recipient, template="hello_world"):
             "type": "template",
             "template": {"name": template, "language": {"code": "en_US"}},
         }
-        logging.info("sending... %s to %s", data, whatsapp_url)
+        this_logger.info("sending... %s to %s", data, whatsapp_url)
         data_json = json.dumps(data)
         response = requests.post(whatsapp_url,
                                  headers=headers,
@@ -123,7 +124,7 @@ def send_message(recipient, message, message_type='text', language=None):
         }
         select_message_template(message_type, data, message)
         final_data = json.dumps(data)
-        logging.info("sending...  %s to %s",  final_data, whatsapp_url)
+        this_logger.info("sending...  %s to %s",  final_data, whatsapp_url)
         response = requests.post(whatsapp_url,
                                  headers=headers,
                                  data=final_data,

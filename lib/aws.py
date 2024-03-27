@@ -1,10 +1,11 @@
 """AWS related functions"""
-import logging
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 import boto3
 from boto3.dynamodb.conditions import Key
 from .gpt import summarize_with_gpt3_langchain
-from . import utils
+from . import utils, logger
+
+this_logger = logger.configure_logging('AWS')
 
 # DYNAMODB TABLES
 # UsersTable (phone_number:key-string, language:string)
@@ -72,7 +73,7 @@ def get_chat_history(session_id):
 
         return formatted_history
     except Exception as e:
-        logging.info(
+        this_logger.error(
             "Error fetching chat history for session_id %s: %s", session_id, e)
         return None
 
@@ -83,7 +84,7 @@ def is_repeted_message(message_id):
         response = sessionTable.get_item(Key={'message_id': message_id})
         return 'Item' in response
     except Exception as e:
-        logging.info("Error checking if message is repeated: %s", e)
+        this_logger.error("Error checking if message is repeated: %s", e)
         return False
 
 
@@ -99,7 +100,7 @@ def save_in_db(message, number, message_id, timestamp, message_type='bot'):
         })
         return True
     except Exception as e:
-        logging.info("Error saving message: %s", e)
+        this_logger.error("Error saving message: %s", e)
         return False
 
 
@@ -119,11 +120,11 @@ def confirm_if_new_msg(number, current_message_timestamp):
         has_new_message = last_message_timestamp > current_message_timestamp
 
         if has_new_message:
-            logging.info("A more recent message exists. Stopping process.")
+            this_logger.info("A more recent message exists. Stopping process.")
 
         return has_new_message
     except Exception as e:
-        logging.info("Error checking if there is a new message: %s", e)
+        this_logger.error("Error checking if there is a new message: %s", e)
         return False
 
 
@@ -135,7 +136,7 @@ def get_user_language(number):
             return response['Item'].get('language', None)
         return None
     except Exception as e:
-        logging.info("Error fetching user language: %s", e)
+        this_logger.error("Error fetching user language: %s", e)
         return None
 
 
@@ -149,7 +150,7 @@ def change_user_language(number, new_language):
         )
         return True
     except Exception as e:
-        print(f"Error updating language for {number}: {e}")
+        this_logger.error("Error updating language for %s: %s", number, e)
         return False
 
 
@@ -160,8 +161,8 @@ def add_user(phone_number):
             'phone_number': phone_number,
             'language': None  # Indicates no preferred language set
         })
-        print(f"User {phone_number} added successfully.")
+        this_logger.info("User %s added successfully.", phone_number)
         return True
     except Exception as e:
-        print(f"Error adding user {phone_number}: {e}")
+        this_logger.error("Error adding user %s: %s", phone_number, e)
         return False

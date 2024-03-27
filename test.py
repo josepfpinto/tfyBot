@@ -1,14 +1,12 @@
 """Testing"""
-import logging
 import os
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, SystemMessage
-from lib import gpt
-from lib.whatsapp import send_template_message, send_message
+from lib import utils, logger
+from lib.whatsapp.whatsapp import send_template_message, send_message
 from lib.fact_check_graph.start import graph
 
-logging.basicConfig(level=logging.INFO)
-
+logger = logger.configure_logging('TEST')
 load_dotenv()
 DUMMY_MESSAGE = "Olives make you fat"
 WHATSAPP_RECIPIENT_WAID = os.getenv("WHATSAPP_RECIPIENT_WAID")
@@ -28,5 +26,5 @@ initial_state = {
 }
 response = graph.invoke(initial_state)
 final_message_content = response.get("messages")[0].content
-print('response: %s', response)
-print('final_message_content: %s', final_message_content)
+logger.info('response: %s', response)
+logger.info('final_message_content: %s', final_message_content)
