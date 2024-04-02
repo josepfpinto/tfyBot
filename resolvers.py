@@ -1,12 +1,13 @@
 """Resolvers"""
 import os
-import logging
 import json
 from flask import request, Blueprint
 from dotenv import load_dotenv
-from lib import main_logic, whatsapp, utils
-from lib.security import signature_required
+from lib import main_logic, utils, logger
+from whatsapp.security import signature_required
+from whatsapp import whatsapp
 
+logger = logger.configure_logging('RESOLVERS')
 
 # Load environment variables
 load_dotenv()
@@ -16,10 +17,10 @@ WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
 webhook_blueprint = Blueprint("webhook", __name__)
 
 
-# @app.route('/', methods=['GET'])
-# def welcome():
-#     """ API welcome resolver """
-#     return utils.create_api_response(200, 'Hello World! Welcome to Think for Yourself Bot.')
+@webhook_blueprint.route("/", methods=["GET"])
+def welcome():
+    """ API welcome resolver """
+    return utils.create_api_response(200, 'Hello World! Welcome to Think for Yourself Bot.')
 
 
 @webhook_blueprint.route("/webhook", methods=["GET"])
@@ -35,15 +36,15 @@ def webhook_get():
         # Check the mode and token sent are correct
         if mode == "subscribe" and token == WHATSAPP_VERIFY_TOKEN:
             # Respond with 200 OK and challenge token from the request
-            logging.info("WEBHOOK_VERIFIED")
+            logger.info("WEBHOOK_VERIFIED")
             return challenge, 200
         else:
             # Responds with '403 Forbidden' if verify tokens do not match
-            logging.info("VERIFICATION_FAILED")
+            logger.info("VERIFICATION_FAILED")
             return utils.create_api_response(403, "Verification failed")
     else:
         # Responds with '400 Bad Request' if verify tokens do not match
-        logging.info("MISSING_PARAMETER")
+        logger.info("MISSING_PARAMETER")
         return utils.create_api_response(400, "Missing parameters")
 
 
@@ -68,7 +69,7 @@ def webhook_post():
 
     # Check if it's a WhatsApp status update
     if (body.get("entry", [{}])[0].get("changes", [{}])[0].get("value", {}).get("statuses")):
-        logging.info("Received a WhatsApp status update.")
+        logger.info("Received a WhatsApp status update.")
         return utils.create_api_response(200, '')
 
     try:
@@ -78,5 +79,5 @@ def webhook_post():
             # if the request is not a WhatsApp API event, return an error
             return utils.create_api_response(404, 'Not a WhatsApp API event')
     except json.JSONDecodeError:
-        logging.error("Failed to decode JSON")
+        logger.error("Failed to decode JSON")
         return utils.create_api_response(400, 'Invalid JSON provided')
