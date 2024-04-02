@@ -88,7 +88,7 @@ def is_repeted_message(message_id):
         return False
 
 
-def save_in_db(message, number, message_id, timestamp, message_type='bot'):
+def save_in_db(message, number, message_id, message_type='bot', timestamp=utils.get_timestamp()):
     """Saves message data into SessionTable."""
     try:
         sessionTable.put_item(Item={

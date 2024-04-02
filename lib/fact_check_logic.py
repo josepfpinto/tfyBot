@@ -1,10 +1,10 @@
 """Main fact check logic"""
-import requests
-from langchain_core.messages import SystemMessage
+import json
+from langchain_core.messages import SystemMessage, AIMessage
+from whatsapp import whatsapp
 from . import gpt
 from . import aws, utils, logger
 from .fact_check_graph.start import graph
-from whatsapp import whatsapp
 
 this_logger = logger.configure_logging('FACT_CHECK_LOGIC')
 
@@ -60,7 +60,7 @@ def fact_check_message(number, message_id, media_id, timestamp, language=None):
     """function that process """
     # Confirm if new message has arrived
     if aws.confirm_if_new_msg(number, timestamp):
-        return None  # Correct output? How to deal with this?
+        return utils.create_api_response(400, 'New message has been received')
 
     # Set initial state
     chat_history = aws.get_chat_history(number)
@@ -73,10 +73,15 @@ def fact_check_message(number, message_id, media_id, timestamp, language=None):
     this_logger.info('final_message_content: %s', final_message_content)
 
     # Sumup and save data in DynamoDB Table:
-    aws.save_in_db(final_message_content, number,
-                   message_id, media_id, timestamp)
-
-    # Send message to user
-    whatsapp.send_message(number, final_message_content,
-                          'interactive_main_menu', language)
-    return
+    if aws.save_in_db(final_message_content, number, f'{message_id}_r', 'bot'):
+        chat_history.append(
+            AIMessage(content=final_message_content, name='Fact_Checker'))
+        sumup = gpt.summarize_with_gpt3_langchain(
+            json.dumps(chat_history)).get('summarized_message')
+        if sumup is None:
+            return utils.create_api_response(400, 'Failed to create sumup')
+        if aws.save_in_db(sumup, number, f'{message_id}_s', 'sumup'):
+            # Send message to user
+            return whatsapp.send_message(number, final_message_content,
+                                         'interactive_main_menu', language)
+    return utils.create_api_response(400, 'Failed to save messages to db')

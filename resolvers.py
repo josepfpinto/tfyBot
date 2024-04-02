@@ -17,10 +17,10 @@ WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
 webhook_blueprint = Blueprint("webhook", __name__)
 
 
-# @app.route('/', methods=['GET'])
-# def welcome():
-#     """ API welcome resolver """
-#     return utils.create_api_response(200, 'Hello World! Welcome to Think for Yourself Bot.')
+@webhook_blueprint.route("/", methods=["GET"])
+def welcome():
+    """ API welcome resolver """
+    return utils.create_api_response(200, 'Hello World! Welcome to Think for Yourself Bot.')
 
 
 @webhook_blueprint.route("/webhook", methods=["GET"])

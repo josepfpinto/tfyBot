@@ -1,6 +1,7 @@
 """Useful classes and functions"""
 import json
 import re
+from datetime import datetime
 from flask import jsonify
 from . import logger
 
@@ -19,6 +20,7 @@ class RequestType:
 
 
 WHATSAPP_CHAR_LIMMIT = 350
+SUMUP_CHAR_LIMMIT = 450
 HISTORY_CHAR_LIMMIT = 3500
 MAX_TOKENS = 0
 
@@ -81,8 +83,8 @@ EDITOR_INSTRUCTION = f''' You are an Editor Agent, responsible for finalizing th
         '''
 
 
-DEFAULT_SYSTEM_PROMPT = '''{INSTRUCTION} Format of the response should be a json (ready to be converted by json.loads)
-    with these keys: {JSON_KEYS} Previous fact-check: {FACT_CHECK}'''
+# DEFAULT_SYSTEM_PROMPT = '''{INSTRUCTION} Format of the response should be a json (ready to be converted by json.loads)
+#     with these keys: {JSON_KEYS} Previous fact-check: {FACT_CHECK}'''
 DEFAULT_USER_PROMPT = '''Last messages and user claim (format: 'last conversation messages:
     user(timestamp): <user_message_or_claims>; aibot(timestamp): <aibot_message>; sumup(timestamp): <conversation_sumup>; ...'): {MESSAGE}'''
 
@@ -162,3 +164,7 @@ def get_dynamic_max_tokens(max_tokens, messages):
     if max_tokens == 0:
         return 200 + len(messages) // 10
     return max_tokens
+
+
+def get_timestamp():
+    return datetime.now().timestamp()

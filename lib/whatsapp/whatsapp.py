@@ -114,7 +114,7 @@ def send_message(recipient, message, message_type='text', language=None):
     """send message to Whatsapp"""
     try:
         if language:
-            translated_message = gpt.translate_with_gpt4_langchain(
+            translated_message = gpt.translate_with_gpt3_langchain(
                 message, language).get('translated_message')
             message = translated_message if translated_message else message
         data = {

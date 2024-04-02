@@ -1,13 +1,13 @@
 """main bot logic"""
+from whatsapp import whatsapp
 from .fact_check_logic import fact_check_message
 from . import aws, utils, gpt, logger
-from whatsapp import whatsapp
 
 this_logger = logger.configure_logging('MAIN')
 DUMMY_MESSAGE = "olives make you fat"
 
 
-def handle_text_message(number, message, language):
+def handle_text_message(number, message, language, message_id, timestamp):
     """Handles processing of text messages."""
     this_logger.info('Processing text message.')
     chat_history = aws.get_chat_history(number)
@@ -17,8 +17,9 @@ def handle_text_message(number, message, language):
         return whatsapp.send_message(number, '', 'interactive_welcome', language)
     elif category.get('value') == 'FACTCHECK':
         this_logger.info('Fact-check requested.')
-        # Save message to DynamoDB here if necessary
-        return whatsapp.send_message(number, '', 'interactive_more_menu', language)
+        if aws.save_in_db(message, number, message_id, 'user', timestamp):
+            return whatsapp.send_message(number, '', 'interactive_more_menu', language)
+        return utils.create_api_response(400, 'Failed to save user message to db')
     elif category.get('value') == 'LANGUAGE':
         this_logger.info('Language change requested.')
         if aws.change_user_language(number, message):
@@ -73,7 +74,7 @@ def process_message(body):
             this_logger.info('user language: %s', language)
 
             if type_message == 'text':
-                return handle_text_message(number, final_message, language)
+                return handle_text_message(number, final_message, language, message_id, timestamp)
             elif type_message == 'interactive':
                 return handle_interactive_message(number, interaction_id, message, message_id, media_id, timestamp, language)
             else:
