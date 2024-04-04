@@ -10,17 +10,17 @@ jobs:
     runs-on: ubuntu-latest  # Runs the workflow in a Linux environment
 
     steps:
-    - uses: actions/checkout@v2  # Checks-out the repository
+    - uses: actions/checkout@v4  # Checks-out the repository
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'  # Set to the target Python version
 
     - name: Install dependencies
       run: |
         pip install pipenv
-        pipenv lock --requirements > requirements.txt
+        pipenv lock -r > requirements.txt
         pip install -r requirements.txt
         npm install -g serverless
         npm install serverless-python-requirements
