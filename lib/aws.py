@@ -1,5 +1,7 @@
 """AWS related functions"""
+import os
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
+from dotenv import load_dotenv
 import boto3
 from boto3.dynamodb.conditions import Key
 from lib.gpt import summarize_with_gpt3_langchain
@@ -7,20 +9,25 @@ from lib import utils, logger
 
 this_logger = logger.configure_logging('AWS')
 
+# Load environment variables
+load_dotenv()
+USERS_TABLE = os.getenv('USERS_TABLE')
+SESSIONS_TABLE = os.getenv("SESSIONS_TABLE")
+
 # DYNAMODB TABLES
 # UsersTable (phone_number:key-string, language:string)
 # SessionTable (message_id:key-string, session_id(phone_number:string), message:string, type:'bot'|'user'|'sumup', timestamp:Unix timestamp format))
+# SessionIdTimestampIndex: Global Secondary Index (GSI) with session_id as the partition key and timestamp as the sort key
 
 dynamodb = boto3.resource('dynamodb')
-sessionTable = dynamodb.Table('session-table')
-usersTable = dynamodb.Table('users-table')
+sessionTable = dynamodb.Table(SESSIONS_TABLE)
+usersTable = dynamodb.Table(USERS_TABLE)
 
 
 def get_chat_history(session_id):
     """ Function that gets last user messages """
     try:
         response = sessionTable.query(
-            # SessionIdTimestampIndex: Global Secondary Index (GSI) with session_id as the partition key and timestamp as the sort key
             IndexName='SessionIdTimestampIndex',
             KeyConditionExpression=Key('session_id').eq(session_id),
             ScanIndexForward=False  # Fetch latest messages first
