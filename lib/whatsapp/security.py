@@ -4,7 +4,7 @@ from flask import jsonify, request
 import hashlib
 import hmac
 from dotenv import load_dotenv
-from .. import logger
+from lib import logger
 
 this_logger = logger.configure_logging('SECURITY')
 

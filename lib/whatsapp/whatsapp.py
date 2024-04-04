@@ -3,8 +3,8 @@ import json
 import os
 from dotenv import load_dotenv
 import requests
-from .whatsapp_messages import select_message_template
-from .. import utils, gpt, logger
+from lib.whatsapp.whatsapp_messages import select_message_template
+from lib import utils, gpt, logger
 
 this_logger = logger.configure_logging('WHATSAPP')
 
@@ -39,8 +39,7 @@ MEDIA_TYPES = {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
 }
 
-whatsapp_url = f"https://graph.facebook.com/{
-    WHATSAPP_VERSION}/{WHATSAPP_PHONE_NUMBER_ID}/messages"
+whatsapp_url = f"https://graph.facebook.com/{WHATSAPP_VERSION}/{WHATSAPP_PHONE_NUMBER_ID}/messages"
 headers = {'Content-Type': 'application/json',
            'Authorization': 'Bearer ' + WHATSAPP_TOKEN}
 

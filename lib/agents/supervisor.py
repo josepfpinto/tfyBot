@@ -2,7 +2,7 @@
 from langchain.output_parsers.openai_functions import JsonOutputFunctionsParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-from .. import logger, utils
+from lib import logger, utils
 
 this_logger = logger.configure_logging('SUPERVISOR')
 

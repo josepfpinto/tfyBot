@@ -2,7 +2,7 @@
 import json
 from langgraph.prebuilt import ToolExecutor, ToolInvocation
 from langchain_core.messages import FunctionMessage
-from .. import logger
+from lib import logger
 
 this_logger = logger.configure_logging('TOOLS')
 

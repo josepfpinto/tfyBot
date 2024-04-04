@@ -3,7 +3,7 @@ from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.messages import AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-from .. import logger
+from lib import logger
 
 this_logger = logger.configure_logging('AGENTS')
 

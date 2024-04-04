@@ -1,8 +1,8 @@
 import functools
 from langchain_openai import ChatOpenAI
-from ..tools import websearch_tools
-from .agent_creator import create_agent, agent_node
-from .. import utils
+from lib.tools import websearch_tools
+from lib.agents.agent_creator import create_agent, agent_node
+from lib import utils
 
 llm = ChatOpenAI(model="gpt-3.5-turbo-1106", streaming=True)  # gpt-4
 
