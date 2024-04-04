@@ -21,7 +21,7 @@ provider:
   runtime: python3.11
   stage: dev
   region: eu-west-1
-  profile: serverless_admin
+  profile: ${opt:profile, 'default'}  # Use the 'serverless deploy --profile serverless_admin' or defaults to 'default'
   # iamRoleStatements:
   #   - Effect: Allow
   #     Action:
