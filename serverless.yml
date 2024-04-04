@@ -88,7 +88,7 @@ resources:
           - AttributeName: message_id
             AttributeType: S
           - AttributeName: session_id
-          AttributeType: S
+            AttributeType: S
           - AttributeName: timestamp
             AttributeType: N
         KeySchema:
