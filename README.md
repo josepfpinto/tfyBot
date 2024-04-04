@@ -32,6 +32,8 @@ An whatsapp bot created with typescript and LangChain. The infrastructure in AWS
 * [![Typescript][Typescript.js]][Typescript-url]
 * [![AWS][AWS.js]][AWS-url]
 * [![Github][Github.js]][Github-url]
+* [![Langchain][Langchain.js]][Langchain-url]
+* [![OpenAi][OpenAi.js]][OpenAi-url]
 <br />
 <br />
 
@@ -75,6 +77,10 @@ Project Link: [https://github.com/josepfpinto/tfyBot](https://github.com/josepfp
 [AWS-url]: https://aws.amazon.com/
 [Github.js]: https://img.shields.io/badge/Github-20232A?style=for-the-badge&logo=github&logoColor=fff
 [Github-url]: github.com/
+[Langchain.js]: https://img.shields.io/badge/Langchain-20232A?style=for-the-badge&logo=langshain&logoColor=fff
+[Langchain-url]: https://www.langchain.com/
+[OpenAi.js]: https://img.shields.io/badge/OpenAi-412991?style=for-the-badge&logo=openai&logoColor=fff
+[OpenAi-url]: https://www.openai.com/
 
 
 # Serverless Framework Python Flask API service backed by DynamoDB on AWS
@@ -229,5 +235,5 @@ serverless wsgi serve
 ```
 
 For additional local development capabilities of `serverless-wsgi` and `serverless-dynamodb-local` plugins, please refer to corresponding GitHub repositories:
-- https://github.com/logandk/serverless-wsgi 
+- https://github.com/logandk/serverless-wsgi
 - https://github.com/99x/serverless-dynamodb-local
