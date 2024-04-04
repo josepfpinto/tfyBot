@@ -1,7 +1,7 @@
 """Main fact check logic"""
 import json
 from langchain_core.messages import SystemMessage, AIMessage
-from whatsapp import whatsapp
+from lib.whatsapp import whatsapp
 from lib import aws, utils, logger, gpt
 from lib.fact_check_graph.start import graph
 
