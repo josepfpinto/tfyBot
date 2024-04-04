@@ -1,7 +1,7 @@
 """main bot logic"""
-from whatsapp import whatsapp
-from .fact_check_logic import fact_check_message
-from . import aws, utils, gpt, logger
+from lib.whatsapp import whatsapp
+from lib.fact_check_logic import fact_check_message
+from lib import aws, utils, gpt, logger
 
 this_logger = logger.configure_logging('MAIN')
 DUMMY_MESSAGE = "olives make you fat"

@@ -2,7 +2,7 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from . import logger
+from lib import logger, utils
 
 this_logger = logger.configure_logging('PERPLEXITY')
 
@@ -33,7 +33,7 @@ def perplexity_request(messages, max_tokens=200):
 
 def deep_analysis_with_perplexity(claim, previous_step_result):
     """
-    Perform complexity analysis on a claim using the Perplexity API, 
+    Perform complexity analysis on a claim using the Perplexity API,
     considering previous steps' output.
     """
     # Constructing the messages list to include both the user's claim and the preliminary fact-checking result
@@ -54,7 +54,7 @@ def deep_analysis_with_perplexity(claim, previous_step_result):
     ]
     # response = perplexity_request_with_web_search(previous_result_str, claim)
     response = perplexity_request(
-        messages, max_tokens=utils.get_dynamic_max_tokens(claim))
+        messages, max_tokens=utils.get_dynamic_max_tokens(utils.MAX_TOKENS, claim))
     try:
         return utils.clean_and_convert_to_json(response)
     except Exception as e:

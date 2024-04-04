@@ -1,5 +1,5 @@
 """Router"""
-from .. import logger
+from lib import logger
 
 this_logger = logger.configure_logging('ROUTER')
 

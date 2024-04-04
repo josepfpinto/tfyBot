@@ -4,8 +4,8 @@ import json
 from flask import request, Blueprint
 from dotenv import load_dotenv
 from lib import main_logic, utils, logger
+from lib.whatsapp import whatsapp
 from whatsapp.security import signature_required
-from whatsapp import whatsapp
 
 logger = logger.configure_logging('RESOLVERS')
 

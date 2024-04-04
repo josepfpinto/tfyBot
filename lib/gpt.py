@@ -5,8 +5,8 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import AgentType, initialize_agent, load_tools
 from langchain.prompts import HumanMessagePromptTemplate, SystemMessagePromptTemplate
-from . import utils, logger
-from .tools import shell_tool, websearch_tools
+from lib import utils, logger
+from lib.tools import shell_tool, websearch_tools
 
 this_logger = logger.configure_logging('TOOLS')
 

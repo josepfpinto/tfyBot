@@ -2,9 +2,8 @@
 import json
 from langchain_core.messages import SystemMessage, AIMessage
 from whatsapp import whatsapp
-from . import gpt
-from . import aws, utils, logger
-from .fact_check_graph.start import graph
+from lib import aws, utils, logger, gpt
+from lib.fact_check_graph.start import graph
 
 this_logger = logger.configure_logging('FACT_CHECK_LOGIC')
 

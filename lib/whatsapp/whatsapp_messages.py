@@ -1,6 +1,6 @@
 """Whatsapp template messages"""
 import re
-from .whatsapp_interactions import filter_keys, options
+from lib.whatsapp.whatsapp_interactions import filter_keys, options
 
 exclude_keys = ['']
 

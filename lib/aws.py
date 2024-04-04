@@ -2,8 +2,8 @@
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 import boto3
 from boto3.dynamodb.conditions import Key
-from .gpt import summarize_with_gpt3_langchain
-from . import utils, logger
+from lib.gpt import summarize_with_gpt3_langchain
+from lib import utils, logger
 
 this_logger = logger.configure_logging('AWS')
 
@@ -12,8 +12,8 @@ this_logger = logger.configure_logging('AWS')
 # SessionTable (message_id:key-string, session_id(phone_number:string), message:string, type:'bot'|'user'|'sumup', timestamp:Unix timestamp format))
 
 dynamodb = boto3.resource('dynamodb')
-sessionTable = dynamodb.Table('SessionTable')
-usersTable = dynamodb.Table('UsersTable')
+sessionTable = dynamodb.Table('session-table')
+usersTable = dynamodb.Table('users-table')
 
 
 def get_chat_history(session_id):

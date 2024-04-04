@@ -1,12 +1,12 @@
 """Graph creation"""
 from langgraph.graph import StateGraph, END
-from ..agents.reviewer_node import reviewer_node
-from ..agents.factchecker_node import factchecker_node
-from ..agents.editor_node import editor_node
-from ..agents.supervisor import supervisor, members
-from .state import AgentState
-from .router import router
-from .. import logger
+from lib.agents.reviewer_node import reviewer_node
+from lib.agents.factchecker_node import factchecker_node
+from lib.agents.editor_node import editor_node
+from lib.agents.supervisor import supervisor, members
+from lib.fact_check_graph.state import AgentState
+from lib.fact_check_graph.router import router
+from lib import logger
 
 this_logger = logger.configure_logging('GRAPH')
 

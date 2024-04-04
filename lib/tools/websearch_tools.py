@@ -9,7 +9,7 @@ from langchain.agents.tools import Tool
 from langchain.tools import tool
 from langchain_community.tools.brave_search.tool import BraveSearch
 from bs4 import BeautifulSoup
-from .. import logger
+from lib import logger
 
 this_logger = logger.configure_logging('WEBSEARCH_TOOLS')
 

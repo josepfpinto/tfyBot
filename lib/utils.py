@@ -3,7 +3,7 @@ import json
 import re
 from datetime import datetime
 from flask import jsonify
-from . import logger
+from lib import logger
 
 this_logger = logger.configure_logging('UTILS')
 
@@ -26,7 +26,7 @@ MAX_TOKENS = 0
 
 SUPERVISOR_PROMPT = '''As a Supervisor of a fact checker bot, your role is to oversee
         a dialogue between these workers: {AGENTS}.
-        Based on the user's request and chat history, 
+        Based on the user's request and chat history,
         determine which worker should take the next action. Each worker is responsible for
         executing a specific task and reporting back their findings and progress.
         The Fact_Checker Agent should be the first to engadge as he is responsible
@@ -43,10 +43,10 @@ SUPERVISOR_QUESTION = '''Given the conversation above, who should act next?
 CATEGORIZE_USER_MESSAGE_JSON_KEYS = '''{value: <GREETINGS | LANGUAGE | FACTCHECK>}'''
 CATEGORIZE_USER_MESSAGE = '''Categorize the last message from a user into three categories: GREETINGS, LANGUAGE or FACTCHECK.
     If the message contains the name of a language, categorize it as LANGUAGE.
-    Else, if the message is a simple greeting or doesn't clearly require fact-checking, categorize it as GREETINGS. 
-    Otherwise, if it contains information (or partial information) that might require verification, categorize it as FACTCHECK. 
+    Else, if the message is a simple greeting or doesn't clearly require fact-checking, categorize it as GREETINGS.
+    Otherwise, if it contains information (or partial information) that might require verification, categorize it as FACTCHECK.
     For context, the previous messages exchanged with the user were also included.
-    Format of the response should be a json (ready to be converted by json.loads) 
+    Format of the response should be a json (ready to be converted by json.loads)
     with these keys: {CATEGORIZE_USER_MESSAGE_JSON_KEYS}'''
 
 TRANSLATE_JSON_KEYS = '''{translated_message: <translated message | empty string>}'''
@@ -59,7 +59,7 @@ SUMMARIZE = '''Summarize the following chat history up to a max of {CHAR_LIMIT} 
 
 ANALYSE_USER_MESSAGE = ''' You are a Fact Checker Agent. Your task involves analyzing user claims in a chat conversation step by step.
         Based on this chat conversation with an user and other ai agents, analyse the content of the user claim(s) and provide an assessment of its truthfulness.
-        1. Identify up to 3 topics from the user's message. 
+        1. Identify up to 3 topics from the user's message.
         2. Conduct internet searches on each topic, one at a time.
         3. Assess the truthfulness of the claims, categorizing them as FALSE, PROBABLY FALSE, PROBABLY TRUE, or TRUE. And provide
         a straightforward explanation for your assessment, supported by up to 3 credible sources. If reliable sources are not available, state so.
