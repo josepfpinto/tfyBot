@@ -5,6 +5,8 @@ service: serverless-flask
 plugins:
   - serverless-python-requirements
   - serverless-wsgi
+  - serverless-offline
+  - serverless-dynamodb-local
 
 custom:
   usersTableName: 'users-table-${self:provider.stage}'
@@ -15,6 +17,11 @@ custom:
   pythonRequirements:
     dockerizePip: false
     usePipenv: true
+  dynamodb:
+    start:
+      migrate: true  # Automatically create/migrate tables on start
+  serverless-offline:
+      httpPort: 8080
 
 provider:
   name: aws

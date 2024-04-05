@@ -13,6 +13,7 @@ this_logger = logger.configure_logging('AWS')
 load_dotenv()
 USERS_TABLE = os.getenv('USERS_TABLE')
 SESSIONS_TABLE = os.getenv("SESSIONS_TABLE")
+IS_OFFLINE = os.getenv("IS_OFFLINE") == "true"
 
 # DYNAMODB TABLES
 # UsersTable (phone_number:key-string, language:string)
@@ -22,6 +23,15 @@ SESSIONS_TABLE = os.getenv("SESSIONS_TABLE")
 dynamodb = boto3.resource('dynamodb')
 sessionTable = dynamodb.Table(SESSIONS_TABLE)
 usersTable = dynamodb.Table(USERS_TABLE)
+
+if IS_OFFLINE:
+    dynamodb = boto3.resource(
+        'dynamodb',
+        region_name='localhost',
+        endpoint_url='http://localhost:8080',
+        aws_access_key_id='fakeMyKeyId',
+        aws_secret_access_key='fakeSecretAccessKey'
+    )
 
 
 def get_chat_history(session_id):
