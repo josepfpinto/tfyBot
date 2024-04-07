@@ -20,8 +20,13 @@ webhook_blueprint = Blueprint("webhook", __name__)
 @webhook_blueprint.route("/", methods=["GET"])
 def welcome():
     """ API welcome resolver """
-    print('TOKEN test:', TOKEN)
     return utils.create_api_response(200, 'Hello World! Welcome to Think for Yourself Bot.')
+
+
+@webhook_blueprint.route("/test", methods=["GET"])
+def test():
+    """ API test resolver - replace content with your own test"""
+    return utils.create_api_response(200, f'Testing - TOKEN: {TOKEN}')
 
 
 @webhook_blueprint.route("/webhook", methods=["GET"])

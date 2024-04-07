@@ -19,7 +19,11 @@ custom:
     dockerizePip: false
     usePipenv: true
   dynamodb:
+    # stages:
+    #   - dev
     start:
+      # port: 8000
+      # inMemory: true
       migrate: true  # Automatically create/migrate tables on start
   serverless-offline:
       noPrependStageInUrl: true

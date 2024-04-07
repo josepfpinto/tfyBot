@@ -18,6 +18,7 @@ workflow.add_node("Fact_Checker", factchecker_node)
 workflow.add_node("Editor", editor_node)
 workflow.add_node("Supervisor", supervisor)
 
+this_logger.debug('members: %s', members)
 for member in members:
     workflow.add_edge(member, "Supervisor")
 
@@ -27,5 +28,7 @@ this_logger.info('conditional_map %s', conditional_map)
 workflow.add_conditional_edges("Supervisor", router, conditional_map)
 
 workflow.set_entry_point("Supervisor")
+
+this_logger.info('workflow: %s', workflow)
 
 graph = workflow.compile()
