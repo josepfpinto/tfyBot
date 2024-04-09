@@ -1,32 +1,35 @@
 """Resolvers"""
+
 import os
 import json
 from flask import request, Blueprint
 from dotenv import load_dotenv
-from lib import main_logic, utils, logger
+from lib import main_logic, utils, logger, aws
 from lib.whatsapp import whatsapp
 from lib.whatsapp.security import signature_required
 
-logger = logger.configure_logging('RESOLVERS')
+this_logger = logger.configure_logging("RESOLVERS")
 
 # Load environment variables
 load_dotenv()
-TOKEN = os.getenv('TOKEN')
 WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
-
 webhook_blueprint = Blueprint("webhook", __name__)
 
 
 @webhook_blueprint.route("/", methods=["GET"])
 def welcome():
-    """ API welcome resolver """
-    return utils.create_api_response(200, 'Hello World! Welcome to Think for Yourself Bot.')
+    """API welcome resolver"""
+    return utils.create_api_response(
+        200, "Hello World! Welcome to Think for Yourself Bot."
+    )
 
 
 @webhook_blueprint.route("/test", methods=["GET"])
 def test():
-    """ API test resolver - replace content with your own test"""
-    return utils.create_api_response(200, f'Testing - TOKEN: {TOKEN}')
+    """API test resolver - replace content with your own test"""
+    return utils.create_api_response(
+        200, f"Testing - WHATSAPP_VERIFY_TOKEN: {WHATSAPP_VERIFY_TOKEN}"
+    )
 
 
 @webhook_blueprint.route("/webhook", methods=["GET"])
@@ -42,15 +45,15 @@ def webhook_get():
         # Check the mode and token sent are correct
         if mode == "subscribe" and token == WHATSAPP_VERIFY_TOKEN:
             # Respond with 200 OK and challenge token from the request
-            logger.info("WEBHOOK_VERIFIED")
+            this_logger.info("WEBHOOK_VERIFIED")
             return challenge, 200
         else:
             # Responds with '403 Forbidden' if verify tokens do not match
-            logger.info("VERIFICATION_FAILED")
+            this_logger.info("VERIFICATION_FAILED")
             return utils.create_api_response(403, "Verification failed")
     else:
         # Responds with '400 Bad Request' if verify tokens do not match
-        logger.info("MISSING_PARAMETER")
+        this_logger.info("MISSING_PARAMETER")
         return utils.create_api_response(400, "Missing parameters")
 
 
@@ -74,16 +77,21 @@ def webhook_post():
     body = request.get_json()
 
     # Check if it's a WhatsApp status update
-    if (body.get("entry", [{}])[0].get("changes", [{}])[0].get("value", {}).get("statuses")):
-        logger.info("Received a WhatsApp status update.")
-        return utils.create_api_response(200, '')
+    if (
+        body.get("entry", [{}])[0]
+        .get("changes", [{}])[0]
+        .get("value", {})
+        .get("statuses")
+    ):
+        this_logger.info("Received a WhatsApp status update.")
+        return utils.create_api_response(200, "")
 
     try:
         if whatsapp.is_valid_whatsapp_message(body):
             return main_logic.process_message(body)
         else:
             # if the request is not a WhatsApp API event, return an error
-            return utils.create_api_response(404, 'Not a WhatsApp API event')
+            return utils.create_api_response(404, "Not a WhatsApp API event")
     except json.JSONDecodeError:
-        logger.error("Failed to decode JSON")
-        return utils.create_api_response(400, 'Invalid JSON provided')
+        this_logger.error("Failed to decode JSON")
+        return utils.create_api_response(400, "Invalid JSON provided")
