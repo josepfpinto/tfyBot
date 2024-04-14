@@ -10,8 +10,8 @@ plugins:
   - serverless-dotenv-plugin
 
 custom:
-  usersTableName: 'users-table-${self:provider.stage}'
-  sessionsTableName: 'sessions-table-${self:provider.stage}'
+  usersTableName: "users-table-${self:provider.stage}"
+  sessionsTableName: "sessions-table-${self:provider.stage}"
   wsgi:
     app: app.app
     packRequirements: false
@@ -24,10 +24,10 @@ custom:
     start:
       # port: 8000
       # inMemory: true
-      migrate: true  # Automatically create/migrate tables on start
+      migrate: true # Automatically create/migrate tables on start
   serverless-offline:
-      noPrependStageInUrl: true
-      httpPort: 8080
+    noPrependStageInUrl: true
+    httpPort: 8080
 
 provider:
   name: aws
@@ -65,29 +65,39 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource:
-        - { "Fn::GetAtt": ["UsersDynamoDBTable", "Arn" ] }
-        - { "Fn::GetAtt": ["SessionsDynamoDBTable", "Arn" ] }
+        - { "Fn::GetAtt": ["UsersDynamoDBTable", "Arn"] }
+        - { "Fn::GetAtt": ["SessionsDynamoDBTable", "Arn"] }
 
 functions:
   app:
     handler: wsgi_handler.handler
     events:
-      - http: ANY /
-      - http: 'ANY {proxy+}'
+      - http:
+          path: /
+          method: ANY
+          request:
+            parameters:
+              headers:
+                X-Hub-Signature-256: true
+      - http:
+          path: "{proxy+}"
+          method: ANY
+          request:
+            parameters:
+              headers:
+                X-Hub-Signature-256: true
 
 resources:
   Resources:
     # UsersTable
     UsersDynamoDBTable:
-      Type: 'AWS::DynamoDB::Table'
+      Type: "AWS::DynamoDB::Table"
       Properties:
         AttributeDefinitions:
-          -
-            AttributeName: phone_number
+          - AttributeName: phone_number
             AttributeType: S
         KeySchema:
-          -
-            AttributeName: phone_number
+          - AttributeName: phone_number
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 2
@@ -95,7 +105,7 @@ resources:
         TableName: ${self:custom.usersTableName}
     # SessionsTable
     SessionsDynamoDBTable:
-      Type: 'AWS::DynamoDB::Table'
+      Type: "AWS::DynamoDB::Table"
       Properties:
         AttributeDefinitions:
           - AttributeName: message_id
