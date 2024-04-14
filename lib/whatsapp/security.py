@@ -25,6 +25,9 @@ def validate_signature(payload, signature):
         digestmod=hashlib.sha256,
     ).hexdigest()
 
+    this_logger.debug(expected_signature)
+    this_logger.debug(signature)
+
     # Check if the signature matches
     return hmac.compare_digest(expected_signature, signature)
 

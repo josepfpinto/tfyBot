@@ -151,15 +151,15 @@ def categorize_with_gpt4_langchain(message, chat_history):
     Categorize the user message LangChain with an OpenAI model. Output: {value: GREETINGS | FACTCHECK | LANGUAGE}
     """
     try:
+
         # set messages
-        messages_template = ChatPromptTemplate.from_messages(
-            [
-                SystemMessagePromptTemplate.from_template(
-                    utils.CATEGORIZE_USER_MESSAGE),
-                chat_history,
-                HumanMessagePromptTemplate.from_template('{MESSAGE}')
-            ]
-        )
+        messages = [
+            SystemMessagePromptTemplate.from_template(utils.CATEGORIZE_USER_MESSAGE),
+            HumanMessagePromptTemplate.from_template('{MESSAGE}')
+        ]
+        if chat_history is not None:
+            messages.insert(1, chat_history)
+        messages_template = ChatPromptTemplate.from_messages(messages)
         messages = messages_template.partial(
             CATEGORIZE_USER_MESSAGE_JSON_KEYS=utils.CATEGORIZE_USER_MESSAGE_JSON_KEYS,
             MESSAGE=message).format_messages()
