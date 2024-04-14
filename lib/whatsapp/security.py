@@ -32,6 +32,14 @@ def validate_signature(payload, signature):
     return hmac.compare_digest(expected_signature, signature)
 
 
+def is_edit_webhook_request(request):
+    """
+    Check if the incoming request is for editing the webhook's callback URL
+    """
+    # Replace with the actual condition that determines if the request is for editing the webhook's callback URL
+    return request.path == "/edit-webhook"
+
+
 def signature_required(f):
     """
     Decorator to ensure that the incoming requests to our webhook are valid and signed with the correct signature.
@@ -39,12 +47,21 @@ def signature_required(f):
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        signature = request.headers.get("X-Hub-Signature-256", "")[
-            7:
-        ]  # Removing 'sha256='
+        this_logger.debug(request)
+        this_logger.debug(f"Request method: {request.method}")
+        this_logger.debug(f"Request path: {request.path}")
+        this_logger.debug(f"Request headers: {request.headers}")
+        this_logger.debug(f"Request body: {request.data.decode('utf-8')}")
+        signature = request.headers.get("X-Hub-Signature-256", "")[7:]  # Removing 'sha256='
+
+        # If the request is for editing the webhook's callback URL, skip the signature validation
+        # if is_edit_webhook_request(request):
+        #     return f(*args, **kwargs)
+
         if not validate_signature(request.data.decode("utf-8"), signature):
             this_logger.info("Signature verification failed!")
             return jsonify({"status": "error", "message": "Invalid signature"}), 403
+
         return f(*args, **kwargs)
 
     return decorated_function
