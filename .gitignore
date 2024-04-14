@@ -133,3 +133,5 @@ dist
 # Pipenv files
 # Pipfile
 # Pipfile.lock
+
+.DS_Store

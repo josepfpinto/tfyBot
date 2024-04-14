@@ -18,12 +18,15 @@ def handle_text_message(number, message, language, message_id, timestamp):
     elif category.get('value') == 'FACTCHECK':
         this_logger.info('Fact-check requested.')
         if aws.save_in_db(message, number, message_id, 'user', timestamp):
+            this_logger.debug('Saved in DB')
             return whatsapp.send_message(number, '', 'interactive_more_menu', language)
         return utils.create_api_response(400, 'Failed to save user message to db')
     elif category.get('value') == 'LANGUAGE':
         this_logger.info('Language change requested.')
         if aws.change_user_language(number, message):
+            this_logger.debug('Language Changed in DB')
             language = aws.get_user_language(number)
+            this_logger.debug('Language fetched from DB %s', language)
             return whatsapp.send_message(number, 'Language changed.', 'interactive_main_menu', language)
         else:
             return whatsapp.send_message(number, "Sorry, wasn't able to change the language.", 'interactive_main_menu', language)
