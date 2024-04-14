@@ -1,6 +1,6 @@
 import os
 from functools import wraps
-from flask import jsonify, request
+from flask import jsonify, request, Response
 import hashlib
 import hmac
 from dotenv import load_dotenv
@@ -35,14 +35,12 @@ def validate_signature(payload, signature):
 def signature_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        this_logger.debug(request)
-        this_logger.debug(request.args.get('hub.verify_token'))
         signature = request.headers.get("X-Hub-Signature-256", "")[7:]  # Removing 'sha256='
 
         # If the request is a GET request and the verify token matches, return the challenge
         if request.method == "GET" and request.args.get('hub.verify_token') == WHATSAPP_VERIFY_TOKEN:
             this_logger.info('WHATSAPP_VERIFY_TOKEN matched!')
-            return request.args.get('hub.challenge')
+            return Response(request.args.get('hub.challenge'), mimetype='text/plain')
 
         if not validate_signature(request.data.decode("utf-8"), signature):
             this_logger.info("Signature verification failed!")
