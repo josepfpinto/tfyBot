@@ -72,20 +72,8 @@ functions:
   app:
     handler: wsgi_handler.handler
     events:
-      - http:
-          path: /
-          method: ANY
-          request:
-            parameters:
-              headers:
-                X-Hub-Signature-256: true
-      - http:
-          path: "{proxy+}"
-          method: ANY
-          request:
-            parameters:
-              headers:
-                X-Hub-Signature-256: true
+      - http: ANY /
+      - http: "ANY {proxy+}"
 
 resources:
   Resources:
