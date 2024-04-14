@@ -5,6 +5,9 @@ service: serverless-flask
 plugins:
   - serverless-python-requirements
   - serverless-wsgi
+  - serverless-offline
+  - serverless-dynamodb-local
+  - serverless-dotenv-plugin
 
 custom:
   usersTableName: 'users-table-${self:provider.stage}'
@@ -15,6 +18,12 @@ custom:
   pythonRequirements:
     dockerizePip: false
     usePipenv: true
+  dynamodb:
+    start:
+      migrate: true  # Automatically create/migrate tables on start
+  serverless-offline:
+      noPrependStageInUrl: true
+      httpPort: 8080
 
 provider:
   name: aws
@@ -22,23 +31,23 @@ provider:
   stage: dev
   region: eu-west-1
   environment:
-    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
-    PERPLEXITY_API_KEY: ${env:PERPLEXITY_API_KEY}
-    TAVILY_API_KEY: ${env:TAVILY_API_KEY}
-    SERPER_API_KEY: ${env:SERPER_API_KEY}
-    BRAVE_API_KEY: ${env:BRAVE_API_KEY}
-    TOKEN: ${env:TOKEN}
-    WHATSAPP_APP_ID: ${env:WHATSAPP_APP_ID}
-    WHATSAPP_APP_SECRET: ${env:WHATSAPP_APP_SECRET}
-    WHATSAPP_TOKEN: ${env:WHATSAPP_TOKEN}
-    WHATSAPP_RECIPIENT_WAID: ${env:WHATSAPP_RECIPIENT_WAID}
-    WHATSAPP_PHONE_NUMBER_ID: ${env:WHATSAPP_PHONE_NUMBER_ID}
-    WHATSAPP_VERSION: ${env:WHATSAPP_VERSION}
-    WHATSAPP_VERIFY_TOKEN: ${env:WHATSAPP_VERIFY_TOKEN}
-    LANGCHAIN_TRACING_V2: ${env:LANGCHAIN_TRACING_V2}
-    LANGCHAIN_API_KEY: ${env:LANGCHAIN_API_KEY}
-    LANGCHAIN_PROJECT: ${env:LANGCHAIN_PROJECT}
-    LANGCHAIN_ENDPOINT: ${env:LANGCHAIN_ENDPOINT}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    PERPLEXITY_API_KEY: ${env:PERPLEXITY_API_KEY, ''}
+    TAVILY_API_KEY: ${env:TAVILY_API_KEY, ''}
+    SERPER_API_KEY: ${env:SERPER_API_KEY, ''}
+    BRAVE_API_KEY: ${env:BRAVE_API_KEY, ''}
+    TOKEN: ${env:TOKEN, ''}
+    WHATSAPP_APP_ID: ${env:WHATSAPP_APP_ID, ''}
+    WHATSAPP_APP_SECRET: ${env:WHATSAPP_APP_SECRET, ''}
+    WHATSAPP_TOKEN: ${env:WHATSAPP_TOKEN, ''}
+    WHATSAPP_RECIPIENT_WAID: ${env:WHATSAPP_RECIPIENT_WAID, ''}
+    WHATSAPP_PHONE_NUMBER_ID: ${env:WHATSAPP_PHONE_NUMBER_ID, ''}
+    WHATSAPP_VERSION: ${env:WHATSAPP_VERSION, ''}
+    WHATSAPP_VERIFY_TOKEN: ${env:WHATSAPP_VERIFY_TOKEN, ''}
+    LANGCHAIN_TRACING_V2: ${env:LANGCHAIN_TRACING_V2, ''}
+    LANGCHAIN_API_KEY: ${env:LANGCHAIN_API_KEY, ''}
+    LANGCHAIN_PROJECT: ${env:LANGCHAIN_PROJECT, ''}
+    LANGCHAIN_ENDPOINT: ${env:LANGCHAIN_ENDPOINT, ''}
     USERS_TABLE: ${self:custom.usersTableName}
     SESSIONS_TABLE: ${self:custom.sessionsTableName}
   # profile: ${opt:profile, 'default'}  # Use the 'serverless deploy --profile serverless_admin' or defaults to 'default'
