@@ -33,7 +33,6 @@ def test():
 
 
 @webhook_blueprint.route("/webhook", methods=["GET"])
-@signature_required
 def webhook_get():
     """token confirmation resolver"""
     # Parse params from the webhook verification request
