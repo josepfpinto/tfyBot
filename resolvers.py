@@ -74,7 +74,6 @@ def webhook_post():
     """
 
     body = request.get_json()
-    this_logger.debug(body)
 
     # Check if it's a WhatsApp status update
     if (
