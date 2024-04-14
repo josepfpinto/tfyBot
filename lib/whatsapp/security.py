@@ -36,14 +36,12 @@ def signature_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         this_logger.debug(request)
-        this_logger.debug(f"Request method: {request.method}")
-        this_logger.debug(f"Request path: {request.path}")
-        this_logger.debug(f"Request headers: {request.headers}")
-        this_logger.debug(f"Request body: {request.data.decode('utf-8')}")
+        this_logger.debug(request.args.get('hub.verify_token'))
         signature = request.headers.get("X-Hub-Signature-256", "")[7:]  # Removing 'sha256='
 
         # If the request is a GET request and the verify token matches, return the challenge
         if request.method == "GET" and request.args.get('hub.verify_token') == WHATSAPP_VERIFY_TOKEN:
+            this_logger.info('WHATSAPP_VERIFY_TOKEN matched!')
             return request.args.get('hub.challenge')
 
         if not validate_signature(request.data.decode("utf-8"), signature):
