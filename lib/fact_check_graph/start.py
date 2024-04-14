@@ -29,6 +29,4 @@ workflow.add_conditional_edges("Supervisor", router, conditional_map)
 
 workflow.set_entry_point("Supervisor")
 
-this_logger.info('workflow: %s', workflow)
-
 graph = workflow.compile()
