@@ -1,6 +1,6 @@
 import os
 from functools import wraps
-from flask import jsonify, request, Response
+from flask import jsonify, request
 import hashlib
 import hmac
 from dotenv import load_dotenv
@@ -25,6 +25,7 @@ def validate_signature(payload, signature):
         digestmod=hashlib.sha256,
     ).hexdigest()
 
+    this_logger.debug(WHATSAPP_APP_SECRET)
     this_logger.debug(expected_signature)
     this_logger.debug(signature)
 
@@ -33,6 +34,9 @@ def validate_signature(payload, signature):
 
 
 def signature_required(f):
+    """
+    Decorator to validate the signature of incoming requests
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         signature = request.headers.get("X-Hub-Signature-256", "")[7:]  # Removing 'sha256='
