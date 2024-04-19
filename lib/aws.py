@@ -39,6 +39,7 @@ if IS_OFFLINE:
 def get_chat_history(session_id):
     """Function that gets last user messages"""
     try:
+        this_logger.debug("get_chat_history")
         response = sessionTable.query(
             IndexName="SessionIdTimestampIndex",
             KeyConditionExpression=Key("session_id").eq(session_id),
@@ -57,7 +58,7 @@ def get_chat_history(session_id):
         total_chars = 0
 
         # Process messages in reverse order to maintain chronological order after breaking for sumup
-        for message in reversed(messages):
+        for message in messages:
             # Decide message type and format accordingly
             this_logger.debug("message %s", message)
             if message["type"] == "bot":
@@ -119,9 +120,11 @@ def get_chat_history(session_id):
 
 def is_repeted_message(message_id):
     """Checks if message_id exists in SessionTable."""
+    this_logger.debug("is_repeted_message: %s", message_id)
     try:
         response = sessionTable.get_item(Key={"message_id": message_id})
         this_logger.debug("response %s", response)
+        this_logger.debug("'Item' in response? %s", "Item" in response)
         return "Item" in response
     except Exception as e:
         this_logger.error("Error checking if message is repeated: %s", e)
@@ -133,6 +136,7 @@ def save_in_db(
 ):
     """Saves message data into SessionTable."""
     try:
+        this_logger.debug('Saving message "%s" for %s.', message, number)
         sessionTable.put_item(
             Item={
                 "message_id": message_id,

@@ -32,12 +32,18 @@ search_brave = BraveSearch.from_api_key(
 
 
 @tool("process_content", return_direct=False)
-def process_content(url: str) -> str:
+def process_content(url: str, content_limit=10000) -> str:
     """Processes content from a webpage with a html.parser"""
     try:
         response = requests.get(url,  timeout=15)
         soup = BeautifulSoup(response.content, 'html.parser')
-        return soup.get_text()
+        text = soup.get_text()
+
+        # Truncate the text if it's too long
+        if len(text) > content_limit:
+            text = text[:content_limit]
+
+        return text
     except Exception as e:
         this_logger.error("Failed to process content from %s: %s", url, e)
         return "Error processing content"

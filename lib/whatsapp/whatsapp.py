@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 import requests
 from lib.whatsapp.whatsapp_messages import select_message_template
-from lib import utils, gpt, logger
+from lib import utils, logger
+
 
 this_logger = logger.configure_logging('WHATSAPP')
 
@@ -111,25 +112,25 @@ def send_template_message(recipient, template="hello_world"):
 
 def send_message(recipient, message, message_type='text', language=None):
     """send message to Whatsapp"""
+    this_logger.info('Send Message: %s IN %s', message, language if language else 'english')
     try:
-        if language:
-            translated_message = gpt.translate_with_gpt3_langchain(
-                message, language).get('translated_message')
-            message = translated_message if translated_message else message
         data = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
             "to": recipient,
         }
-        select_message_template(message_type, data, message)
+        select_message_template(message_type, data, message, language)
+        this_logger.debug('sending data: %s', data)
         final_data = json.dumps(data)
-        this_logger.info("sending...  %s to %s",  final_data, whatsapp_url)
+        this_logger.debug("sending...  %s to %s", final_data, whatsapp_url)
         response = requests.post(whatsapp_url,
                                  headers=headers,
                                  data=final_data,
                                  timeout=20)
+        this_logger.debug('FINAL RESPONSE TO WHATSAPP: %s', response)
 
         return utils.create_api_response(response.status_code, 'message sent' if response.status_code == 200 else response.text)
 
     except Exception as e:
+        this_logger.debug('ERROR RESPONDING TO WHATSAPP: %s', e)
         return utils.create_api_response(403, e)

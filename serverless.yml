@@ -75,6 +75,7 @@ provider:
 functions:
   app:
     handler: wsgi_handler.handler
+    timeout: 300 # set the timeout to 300 seconds
     events:
       - http: ANY /
       - http: "ANY {proxy+}"
@@ -92,7 +93,7 @@ resources:
           - AttributeName: phone_number
             KeyType: HASH
         ProvisionedThroughput:
-          ReadCapacityUnits: 2
+          ReadCapacityUnits: 4
           WriteCapacityUnits: 2
         TableName: ${self:custom.usersTableName}
     # SessionsTable
