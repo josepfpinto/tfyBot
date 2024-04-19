@@ -78,9 +78,6 @@ this_logger.info("final_message_content: %s", final_message_content)
 # -------------
 # Test via WhatsApp
 
-# Test the WhatsApp API
-# send_template_message(WHATSAPP_RECIPIENT_WAID, final_message_content)
-
 # Test welcome message: "Hi!"
 # Test change language message: "Spanish"
 # Test button change language (with a prefered language and without one)
