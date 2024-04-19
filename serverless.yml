@@ -54,7 +54,7 @@ provider:
     LANGCHAIN_ENDPOINT: ${env:LANGCHAIN_ENDPOINT, ''}
     USERS_TABLE: ${self:custom.usersTableName}
     SESSIONS_TABLE: ${self:custom.sessionsTableName}
-  # profile: ${opt:profile, 'default'}  # Use the 'serverless deploy --profile serverless_admin' or defaults to 'default'
+  profile: ${opt:profile, 'default'}  # Use the 'serverless deploy --profile serverless_admin' or defaults to 'default'
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -67,6 +67,10 @@ provider:
       Resource:
         - { "Fn::GetAtt": ["UsersDynamoDBTable", "Arn"] }
         - { "Fn::GetAtt": ["SessionsDynamoDBTable", "Arn"] }
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.sessionsTableName}/index/SessionIdTimestampIndex"
 
 functions:
   app:
