@@ -32,7 +32,7 @@ search_brave = BraveSearch.from_api_key(
 
 
 @tool("process_content", return_direct=False)
-def process_content(url: str, content_limit=10000) -> str:
+def process_content(url: str, content_limit=1500) -> str:
     """Processes content from a webpage with a html.parser"""
     try:
         response = requests.get(url,  timeout=15)

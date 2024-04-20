@@ -26,6 +26,8 @@ SUMUP_CHAR_LIMMIT = 450
 HISTORY_CHAR_LIMMIT = 3500
 MAX_TOKENS = 0
 
+MESSAGE_TO_BE_CONTINUED_FLAG = '[cont.]'
+
 SUPERVISOR_PROMPT = """As a Supervisor of a fact checker bot, your role is to oversee
         a dialogue between these workers: {AGENTS}.
         Based on the user's request and chat history,
@@ -43,11 +45,10 @@ SUPERVISOR_QUESTION = """Given the conversation above, who should act next?
         Or should we FINISH? Select one of: {OPTIONS}"""
 
 CATEGORIZE_USER_MESSAGE_JSON_KEYS = """{value: <GREETINGS | LANGUAGE | FACTCHECK>}"""
-CATEGORIZE_USER_MESSAGE = """Categorize the last message from a user into three categories: GREETINGS, LANGUAGE or FACTCHECK.
-    If the message contains the name of a language, categorize it as LANGUAGE.
+CATEGORIZE_USER_MESSAGE = """Categorize the next user (human) message into one of three categories: GREETINGS, LANGUAGE or FACTCHECK.
+    If the message contains the name of a language or language code, categorize it as LANGUAGE.
     Else, if the message is a simple greeting or doesn't clearly require fact-checking, categorize it as GREETINGS.
-    Otherwise, if it contains information (or partial information) that might require verification, categorize it as FACTCHECK.
-    For context, the previous messages exchanged with the user were also included.
+    Otherwise, categorize it as FACTCHECK.
     Format of the response should be a json (ready to be converted by json.loads)
     with these keys: {CATEGORIZE_USER_MESSAGE_JSON_KEYS}"""
 

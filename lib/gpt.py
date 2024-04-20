@@ -156,7 +156,7 @@ def summarize_with_gpt3_langchain(text, char_limit=utils.SUMUP_CHAR_LIMMIT):
     return gpt_request(llm, messages, final_max_tokens)
 
 
-def categorize_with_gpt4_langchain(message, chat_history):
+def categorize_with_gpt4_langchain(message):
     """
     Categorize the user message LangChain with an OpenAI model. Output: {value: GREETINGS | FACTCHECK | LANGUAGE}
     """
@@ -167,8 +167,6 @@ def categorize_with_gpt4_langchain(message, chat_history):
             SystemMessagePromptTemplate.from_template(utils.CATEGORIZE_USER_MESSAGE),
             HumanMessagePromptTemplate.from_template('{MESSAGE}')
         ]
-        if chat_history is not None:
-            messages = [messages[0]] + chat_history + [messages[1]]
         this_logger.debug('Messages 1: %s', messages)
         messages_template = ChatPromptTemplate.from_messages(messages)
         messages = messages_template.partial(
