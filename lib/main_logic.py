@@ -7,11 +7,35 @@ this_logger = logger.configure_logging('MAIN')
 DUMMY_MESSAGE = "olives make you fat"
 
 
+def check_if_last_message_is_waiting_for_continuation(chat_history):
+    """Check if the last message in the chat history is waiting for continuation."""
+    if not chat_history:
+        # If the chat history is empty, return False
+        return False
+
+    # Get the last message in the chat history
+    last_message = chat_history[0]
+    this_logger.debug('last_message: %s', last_message)
+
+    # Check if the last message ends with '[cont.]'
+    if last_message.content.endswith('[cont.]'):
+        return True
+
+    return False
+
+
 def handle_text_message(number, message, language, message_id, timestamp):
     """Handles processing of text messages."""
     this_logger.info('Processing text message.')
     chat_history = aws.get_chat_history(number)
-    category = gpt.categorize_with_gpt4_langchain(message, chat_history)
+
+    if check_if_last_message_is_waiting_for_continuation(chat_history):
+        this_logger.info('Continuation of fact-check...')
+        if aws.update_in_db(message, number):
+            this_logger.debug('Updated in DB')
+            return whatsapp.send_message(number, '', 'interactive_more_menu', language)
+
+    category = gpt.categorize_with_gpt4_langchain(message)
     if category.get('value') == 'GREETINGS':
         this_logger.info('Greeting detected.')
         return whatsapp.send_message(number, '', 'interactive_welcome', language)
@@ -40,7 +64,10 @@ def handle_interactive_message(number, interaction_id, message, message_id, medi
     if interaction_id == "factcheck":
         return whatsapp.send_message(number, 'Ok then! Send your message and I’ll do my best to fact-check it. 😊', 'text', language)
     elif interaction_id == "buttonaddmore":
-        return whatsapp.send_message(number, 'Ok, I’ll wait.', 'text', language)
+        if aws.wait_for_next_message(number):
+            return whatsapp.send_message(number, 'Ok, I’ll wait.', 'text', language)
+        else:
+            return whatsapp.send_message(number, "Sorry, won't allow the continuation of factcheck", 'interactive_main_menu', language)
     elif interaction_id == "buttonready":
         return fact_check_message(number, message_id, media_id, timestamp, language)
     elif interaction_id == "buttoncancel":

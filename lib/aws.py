@@ -39,6 +39,7 @@ if IS_OFFLINE:
 def get_chat_history(session_id):
     """Function that gets last user messages"""
     try:
+        this_logger.debug("get_chat_history")
         response = sessionTable.query(
             IndexName="SessionIdTimestampIndex",
             KeyConditionExpression=Key("session_id").eq(session_id),
@@ -57,7 +58,7 @@ def get_chat_history(session_id):
         total_chars = 0
 
         # Process messages in reverse order to maintain chronological order after breaking for sumup
-        for message in reversed(messages):
+        for message in messages:
             # Decide message type and format accordingly
             this_logger.debug("message %s", message)
             if message["type"] == "bot":
@@ -119,9 +120,11 @@ def get_chat_history(session_id):
 
 def is_repeted_message(message_id):
     """Checks if message_id exists in SessionTable."""
+    this_logger.debug("is_repeted_message: %s", message_id)
     try:
         response = sessionTable.get_item(Key={"message_id": message_id})
         this_logger.debug("response %s", response)
+        this_logger.debug("'Item' in response? %s", "Item" in response)
         return "Item" in response
     except Exception as e:
         this_logger.error("Error checking if message is repeated: %s", e)
@@ -133,6 +136,7 @@ def save_in_db(
 ):
     """Saves message data into SessionTable."""
     try:
+        this_logger.debug('Saving message "%s" for %s.', message, number)
         sessionTable.put_item(
             Item={
                 "message_id": message_id,
@@ -145,6 +149,77 @@ def save_in_db(
         return True
     except Exception as e:
         this_logger.error("Error saving message: %s", e)
+        return False
+
+
+def get_latest_message(number):
+    """Retrieve the latest message for a given number from SessionTable."""
+    response = sessionTable.query(
+        IndexName='SessionIdTimestampIndex',
+        KeyConditionExpression=Key('session_id').eq(number),
+        ScanIndexForward=False,  # This makes the query return results in descending order of sort key
+        Limit=1  # We only need the latest item
+    )
+    return response['Items'][0] if response['Items'] else None
+
+
+def update_message(message, message_id):
+    """Update a message for a given number from SessionTable."""
+    this_logger.debug('Updating message with %s for %s', message, message_id)
+
+    sessionTable.update_item(
+        Key={
+            'message_id': message_id
+        },
+        UpdateExpression='SET message = :val1',
+        ExpressionAttributeValues={
+            ':val1': message
+        }
+    )
+
+
+def wait_for_next_message(number):
+    """Updates the latest message of a particular number in SessionTable with MESSAGE_TO_BE_CONTINUED_FLAG."""
+    try:
+        this_logger.debug('Updating latest message with MESSAGE_TO_BE_CONTINUED_FLAG for %s.', number)
+
+        current_item = get_latest_message(number)
+        this_logger.debug('current_item: %s', current_item)
+
+        if current_item:
+            new_message = current_item['message'] + ' ' + utils.MESSAGE_TO_BE_CONTINUED_FLAG
+
+            update_message(new_message, current_item['message_id'])
+
+        return True
+    except Exception as e:
+        this_logger.error("Error updating message: %s", e)
+        return False
+
+
+def update_in_db(message, number):
+    """Updates the latest message of a particular number in SessionTable."""
+    try:
+        this_logger.debug('Updating latest message with "%s" for %s.', message, number)
+
+        current_item = get_latest_message(number)
+
+        if current_item:
+            current_message = current_item['message']
+
+            # Check if the current message ends with utils.MESSAGE_TO_BE_CONTINUED_FLAG
+            if current_message.endswith(utils.MESSAGE_TO_BE_CONTINUED_FLAG):
+                # If it does, remove utils.MESSAGE_TO_BE_CONTINUED_FLAG and append the new message
+                current_message = current_message[:-len(utils.MESSAGE_TO_BE_CONTINUED_FLAG)] + message
+            else:
+                # If it doesn't, just append the new message
+                current_message += message
+
+            update_message(current_message, current_item['message_id'])
+
+        return True
+    except Exception as e:
+        this_logger.error("Error updating message: %s", e)
         return False
 
 
