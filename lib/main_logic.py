@@ -38,7 +38,10 @@ def handle_text_message(number, message, language, message_id, timestamp):
     category = gpt.categorize_with_gpt4_langchain(message)
     if category.get('value') == 'GREETINGS':
         this_logger.info('Greeting detected.')
-        return whatsapp.send_message(number, '', 'interactive_welcome', language)
+        if aws.save_in_db('Greeting detected.', number, message_id, 'system', timestamp):
+            this_logger.debug('Saved in DB')
+            return whatsapp.send_message(number, '', 'interactive_welcome', language)
+        return utils.create_api_response(400, 'Failed to save system message to db')
     elif category.get('value') == 'FACTCHECK':
         this_logger.info('Fact-check requested.')
         if aws.save_in_db(message, number, message_id, 'user', timestamp):
@@ -47,13 +50,16 @@ def handle_text_message(number, message, language, message_id, timestamp):
         return utils.create_api_response(400, 'Failed to save user message to db')
     elif category.get('value') == 'LANGUAGE':
         this_logger.info('Language change requested.')
-        if aws.change_user_language(number, message):
-            this_logger.debug('Language Changed in DB')
-            language = aws.get_user_language(number)
-            this_logger.debug('Language fetched from DB %s', language)
-            return whatsapp.send_message(number, 'Language changed.', 'interactive_main_menu', language)
-        else:
-            return whatsapp.send_message(number, "Sorry, wasn't able to change the language.", 'interactive_main_menu', language)
+        if aws.save_in_db('Language change requested.', number, message_id, 'system', timestamp):
+            this_logger.debug('Saved in DB')
+            if aws.change_user_language(number, message):
+                this_logger.debug('Language Changed in DB')
+                language = aws.get_user_language(number)
+                this_logger.debug('Language fetched from DB %s', language)
+                return whatsapp.send_message(number, 'Language changed.', 'interactive_main_menu', language)
+            else:
+                return whatsapp.send_message(number, "Sorry, wasn't able to change the language.", 'interactive_main_menu', language)
+        return utils.create_api_response(400, 'Failed to save system message to db')
     else:
         return utils.create_api_response(400, f'Failed to categorize user message: {message} - category: {str(category)}')
 
@@ -62,20 +68,36 @@ def handle_interactive_message(number, interaction_id, message, message_id, medi
     """Handles processing of interactive messages."""
     this_logger.info('\nProcessing interactive message.')
     if interaction_id == "factcheck":
-        return whatsapp.send_message(number, 'Ok then! Send your message and I’ll do my best to fact-check it. 😊', 'text', language)
+        if aws.save_in_db('ready to receive fact check message', number, message_id, 'system', timestamp):
+            this_logger.debug('Saved in DB')
+            return whatsapp.send_message(number, 'Ok then! Send your message and I’ll do my best to fact-check it. 😊', 'text', language)
+        return utils.create_api_response(400, 'Failed to save system message to db')
     elif interaction_id == "buttonaddmore":
-        if aws.wait_for_next_message(number):
-            return whatsapp.send_message(number, 'Ok, I’ll wait.', 'text', language)
-        else:
-            return whatsapp.send_message(number, "Sorry, won't allow the continuation of factcheck", 'interactive_main_menu', language)
+        if aws.save_in_db('waiting for next message', number, message_id, 'system', timestamp):
+            this_logger.debug('Saved in DB')
+            if aws.wait_for_next_message(number):
+                return whatsapp.send_message(number, 'Ok, I’ll wait.', 'text', language)
+            else:
+                return whatsapp.send_message(number, "Sorry, won't allow the continuation of factcheck", 'interactive_main_menu', language)
+        return utils.create_api_response(400, 'Failed to save system message to db')
     elif interaction_id == "buttonready":
-        return fact_check_message(number, message_id, media_id, timestamp, language)
+        if aws.save_in_db('starting to fact check', number, message_id, 'system', timestamp):
+            this_logger.debug('Saved in DB')
+            return fact_check_message(number, message_id, media_id, timestamp, language)
+        return utils.create_api_response(400, 'Failed to save system message to db')
     elif interaction_id == "buttoncancel":
-        return whatsapp.send_message(number, 'Ok. Anything else?', 'interactive_main_menu', language)
+        if aws.save_in_db('cancel fact check', number, message_id, 'system', timestamp):
+            this_logger.debug('Saved in DB')
+            return whatsapp.send_message(number, 'Ok. Anything else?', 'interactive_main_menu', language)
+        return utils.create_api_response(400, 'Failed to save system message to db')
     elif interaction_id == "changelanguage":
-        language_msg = f'''At the moment your preferred language is {
+        if aws.save_in_db('waiting for new language', number, message_id, 'system', timestamp):
+            this_logger.debug('Saved in DB')
+            language_msg = f'''At the moment your preferred language is {
             language}. Please write your new preferred language.''' if language else "You don't have a preferred language. If you want, please write your preferred language."
-        return whatsapp.send_message(number, language_msg, 'interactive_main_menu', language)
+            return whatsapp.send_message(number, language_msg, 'interactive_main_menu', language)
+        return utils.create_api_response(400, 'Failed to save system message to db')
+
     # elif interaction_id == "moreinfo": TODO...
     else:
         return utils.create_api_response(400, f'Failed to identify interactive type: {message}')

@@ -1,6 +1,6 @@
 """Graph creation"""
 from langgraph.graph import StateGraph, END
-from lib.agents.reviewer_node import reviewer_node
+#from lib.agents.reviewer_node import reviewer_node
 from lib.agents.factchecker_node import factchecker_node
 from lib.agents.editor_node import editor_node
 from lib.agents.supervisor import supervisor, members

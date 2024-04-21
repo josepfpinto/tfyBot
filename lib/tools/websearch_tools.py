@@ -1,8 +1,8 @@
 """Websearch tools available"""
 import os
+import asyncio
 from dotenv import load_dotenv
 import requests
-import asyncio
 from langchain.tools.tavily_search import TavilySearchResults
 from langchain.utilities.google_serper import GoogleSerperAPIWrapper
 from langchain.utilities.tavily_search import TavilySearchAPIWrapper
@@ -30,25 +30,46 @@ search_serper = Tool(
     description="Access to google search. Use this to obtain information about current events, to find support links, or to get info on how to write code.",
 )
 search_brave = BraveSearch.from_api_key(
-    api_key=BRAVE_API_KEY, search_kwargs={"count": 1})
+    api_key=BRAVE_API_KEY, search_kwargs={"count": 2})
+
+
+def get_content_from_url(soup):
+    """Get the text from the soup
+
+    Args:
+        soup (BeautifulSoup): The soup to get the text from
+
+    Returns:
+        str: The text from the soup
+    """
+    text = ""
+    tags = ["p", "h1", "h2", "h3", "h4", "h5"]
+    for element in soup.find_all(tags):  # Find all the <p> elements
+        text += element.text + "\n"
+    return text
 
 
 @tool("process_content", return_direct=False)
 def process_content(url: str, content_limit=1500) -> str:
     """Processes content from a webpage with a html.parser"""
     try:
-        response = requests.get(url,  timeout=15)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        text = soup.get_text()
+        response = requests.get(url, timeout=10)
+        soup = BeautifulSoup(
+            response.content, "lxml", from_encoding=response.encoding
+        )
 
-        # Truncate the text if it's too long
-        if len(text) > content_limit:
-            text = text[:content_limit]
+        for script_or_style in soup(["script", "style"]):
+            script_or_style.extract()
 
-        return text
+        raw_content = get_content_from_url(soup)
+        lines = (line.strip() for line in raw_content.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        content = "\n".join(chunk for chunk in chunks if chunk)
+        return content
+
     except Exception as e:
         this_logger.error("Failed to process content from %s: %s", url, e)
-        return "Error processing content"
+        return ""
 
 
 async def get_report(query: str) -> str:
@@ -71,5 +92,11 @@ def search_and_get_report(query: str) -> str:
     return asyncio.run(get_report(query))
 
 
+@tool("useless_tool", return_direct=False)
+def no_tool():
+    """This tool does nothing"""
+
+
 tools_fact_checker = [search_and_get_report]
 tools_reviewer = [search_brave, process_content]
+tools_editor = [no_tool]

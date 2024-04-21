@@ -11,6 +11,7 @@
     "serverless-wsgi": "^3.0.3"
   },
   "dependencies": {
-    "@aws-sdk/util-endpoints": "^3.540.0"
+    "@aws-sdk/util-endpoints": "^3.540.0",
+    "es-define-property": "^1.0.0"
   }
 }

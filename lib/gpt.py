@@ -145,7 +145,7 @@ def summarize_with_gpt3_langchain(text, char_limit=utils.SUMUP_CHAR_LIMMIT):
 
     # confirm max tokens
     final_max_tokens = utils.get_dynamic_max_tokens(
-        utils.MAX_TOKENS, messages[0] + messages[1])
+        utils.MAX_TOKENS, messages)
 
     # Setup for LangChain
     llm = get_llm3(final_max_tokens)

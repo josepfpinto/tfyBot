@@ -8,6 +8,6 @@ from lib import utils
 llm = ChatOpenAI(model="gpt-4", streaming=True)
 
 editor_agent = create_agent(
-    llm, websearch_tools.tools_reviewer, utils.EDITOR_INSTRUCTION)
+    llm, websearch_tools.tools_editor, utils.EDITOR_INSTRUCTION)
 editor_node = functools.partial(
     agent_node, agent=editor_agent, name="Editor")

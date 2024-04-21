@@ -5,7 +5,7 @@ from decimal import Decimal
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from dotenv import load_dotenv
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 from lib.gpt import summarize_with_gpt3_langchain
 from lib import utils, logger
 
@@ -60,21 +60,24 @@ def get_chat_history(session_id):
         for message in messages:
             # Decide message type and format accordingly
             this_logger.debug("message %s", message)
+            if message["type"] == "system":
+                this_logger.debug("type system")
+                continue  # Skip system messages
             if message["type"] == "bot":
                 this_logger.debug("type bot")
                 formatted_message = AIMessage(
-                    content=message["message"], name="Fact_Checker"
+                    content=message["message"], name="Fact_Checker", id=message["message_id"]
                 )
             elif message["type"] == "sumup":
                 this_logger.debug("type sumup")
                 formatted_message = SystemMessage(
-                    content=message["message"], name="System"
+                    content=message["message"], name="System", id=message["message_id"]
                 )
                 sumup_found = True  # Mark that a sumup message was found
             elif message["type"] == "user":
                 this_logger.debug("type user")
                 formatted_message = HumanMessage(
-                    content=message["message"], name="User"
+                    content=message["message"], name="User", id=message["message_id"], additional_kwargs={"vector": message["vector"]}
                 )
             else:
                 this_logger.debug("no known type found...")
