@@ -77,7 +77,7 @@ def get_chat_history(session_id):
             elif message["type"] == "user":
                 this_logger.debug("type user")
                 formatted_message = HumanMessage(
-                    content=message["message"], name="User", id=message["message_id"], additional_kwargs={"vector": message["vector"]}
+                    content=message["message"], name="User", id=message["message_id"]
                 )
             else:
                 this_logger.debug("no known type found...")
