@@ -97,9 +97,8 @@ def translate_gpt4(message, language):
     """
     Translate a claim using LangChain with an OpenAI model. Output: {translated_message: string}
     """
+    this_logger.info('\nTranslating message...')
 
-    this_logger.info('Translating message...')
-    # set message
     messages_template = ChatPromptTemplate.from_messages(
         [
             SystemMessagePromptTemplate.from_template(
@@ -107,23 +106,20 @@ def translate_gpt4(message, language):
             AIMessagePromptTemplate.from_template('{MESSAGE}')
         ]
     )
-    this_logger.debug('Messages template: %s', messages_template)
     messages = messages_template.partial(
         LANGUAGE=language,
         TRANSLATE_JSON_KEYS=utils.TRANSLATE_JSON_KEYS,
         MESSAGE=message).format_messages()
-    this_logger.debug('Messages: %s', messages)
+    this_logger.debug('Translating messages: %s', messages)
 
     # confirm max tokens
     final_max_tokens = utils.get_dynamic_max_tokens(
         utils.MAX_TOKENS, messages[0] + messages[1])
-    this_logger.debug('final_max_tokens: %s', final_max_tokens)
 
     # Setup for LangChain
     llm = get_llm4(final_max_tokens)
 
     response = gpt_request(llm, messages, final_max_tokens)
-    this_logger.debug('Translation response: %s', response)
 
     translated_message = response.get('translated_message')
 
@@ -134,7 +130,8 @@ def summarize_with_gpt3_langchain(text, char_limit=utils.SUMUP_CHAR_LIMMIT):
     """
     Translate a claim using LangChain with an OpenAI model. Output: {summarized_message: string}
     """
-    # set message
+    this_logger.info('\Summarizing messages...')
+
     messages_template = ChatPromptTemplate.from_messages(
         [
             SystemMessagePromptTemplate.from_template(utils.SUMMARIZE),
@@ -148,7 +145,7 @@ def summarize_with_gpt3_langchain(text, char_limit=utils.SUMUP_CHAR_LIMMIT):
 
     # confirm max tokens
     final_max_tokens = utils.get_dynamic_max_tokens(
-        utils.MAX_TOKENS, messages[0] + messages[1])
+        utils.MAX_TOKENS, messages)
 
     # Setup for LangChain
     llm = get_llm3(final_max_tokens)
@@ -160,21 +157,17 @@ def categorize_with_gpt4_langchain(message):
     """
     Categorize the user message LangChain with an OpenAI model. Output: {value: GREETINGS | FACTCHECK | LANGUAGE}
     """
-    try:
+    this_logger.info('\Categorizing messages...')
 
-        # set messages
-        messages = [
-            SystemMessagePromptTemplate.from_template(utils.CATEGORIZE_USER_MESSAGE),
-            HumanMessagePromptTemplate.from_template('{MESSAGE}')
-        ]
-        this_logger.debug('Messages 1: %s', messages)
-        messages_template = ChatPromptTemplate.from_messages(messages)
-        messages = messages_template.partial(
-            CATEGORIZE_USER_MESSAGE_JSON_KEYS=utils.CATEGORIZE_USER_MESSAGE_JSON_KEYS,
-            MESSAGE=message).format_messages()
-        this_logger.debug('Messages 2: %s', messages)
-    except Exception as e:
-        this_logger.error('error %s', e)
+    messages = [
+        SystemMessagePromptTemplate.from_template(utils.CATEGORIZE_USER_MESSAGE),
+        HumanMessagePromptTemplate.from_template('{MESSAGE}')
+    ]
+    messages_template = ChatPromptTemplate.from_messages(messages)
+    messages = messages_template.partial(
+        CATEGORIZE_USER_MESSAGE_JSON_KEYS=utils.CATEGORIZE_USER_MESSAGE_JSON_KEYS,
+        MESSAGE=message).format_messages()
+    this_logger.debug('\ncategorizing messages: %s', messages)
 
     # confirm max tokens
     final_max_tokens = utils.get_dynamic_max_tokens(

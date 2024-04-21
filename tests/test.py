@@ -92,7 +92,7 @@ this_logger.info("final_message_content: %s", final_message_content)
 # CLAIMS TO TEST
 # Breast milk is a very good substitute for COVID-19 vaccines. FALSE
 # Technically, since Ukraine never officially registered its borders with the United Nations, Russia has not committed any violation of international law by invading its territory. FALSE
-# Groups of Pakistani students used Indian flags in order to escape from Ukraine during the Russian invasion. FALSE
+# Groups of Pakistani students used Indian flags in order to escape from Ukraine during the Russian invasion. TRUE
 # Health care costs per person in the U.S. are one of the highest in the developed world. TRUE
 # Image1 FALSE
 # Image2 FALSE

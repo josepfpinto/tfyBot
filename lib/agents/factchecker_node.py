@@ -8,6 +8,6 @@ from lib import utils
 llm = ChatOpenAI(model="gpt-4", streaming=True, max_tokens=1000)
 
 factchecker_agent = create_agent(
-    llm, websearch_tools.tools, utils.ANALYSE_USER_MESSAGE)
+    llm, websearch_tools.tools_fact_checker, utils.ANALYSE_USER_MESSAGE)
 factchecker_node = functools.partial(
     agent_node, agent=factchecker_agent, name="Fact_Checker")
