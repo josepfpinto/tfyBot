@@ -25,7 +25,7 @@ def create_agent(llm: ChatOpenAI, tools: list, system_prompt: str):
 
 def agent_node(state, agent, name):
     """Deploy Agent"""
-    this_logger.info("\nWe are inside AGENT %s:", name)
-    this_logger.info('%s\n', state)
+    this_logger.info("\n\nWe are inside AGENT %s:", name)
+    this_logger.debug('%s\n', state)
     result = agent.invoke(state)
     return {"messages": [AIMessage(content=result["output"], name=name)]}

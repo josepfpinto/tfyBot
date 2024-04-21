@@ -12,7 +12,6 @@ this_logger = logger.configure_logging("UTILS")
 
 class RequestType:
     """Function to calculate cost based on number of tokens"""
-
     def __enum__(self):
         pass
 
@@ -33,12 +32,9 @@ SUPERVISOR_PROMPT = """As a Supervisor of a fact checker bot, your role is to ov
         Based on the user's request and chat history,
         determine which worker should take the next action. Each worker is responsible for
         executing a specific task and reporting back their findings and progress.
-        The Fact_Checker Agent should be the first to engadge as he is responsible
-        for correctly fact check only the last user message, then the Reviewer Agent should confirm
-        or not the Fact_Checker Agent assumption. If he doesn't Fact_Checker Agent should
-        repeat the search only 1 more time.
-        In the end, having an agreement or not between Fact_Checker Agent and Reviewer Agent,
-        the result should be presented to the Editor Agent that will create the
+        The Fact_Checker Agent should be the first to engage as he is responsible
+        for correctly fact check only the last user message.
+        Then the result should be presented to the Editor Agent that will create the
         final message to be sent to the user, based on the previous findings.
         Once all tasks are complete, indicate with 'FINISH'."""
 SUPERVISOR_QUESTION = """Given the conversation above, who should act next?
@@ -67,7 +63,7 @@ ANALYSE_USER_MESSAGE = """ You are a Fact Checker Agent. Your task involves anal
         2. Conduct internet searches on each topic, one at a time.
         3. Assess the truthfulness of the claims, categorizing them as FALSE, PROBABLY FALSE, PROBABLY TRUE, or TRUE. And provide
         a straightforward explanation for your assessment, supported by up to 3 credible sources. If reliable sources are not available, state so.
-        Ensure your final response is concise and based on factual evidence.
+        4. Ensure your final response is concise, objective, unbiased and based on factual evidence.
         """
 REVIEW_ANALYSIS_INSTRUCTION = """You are a Reviewer Agent tasked with evaluating the Fact Checker Agent's analysis of the latest user claims.
         Based on this chat conversation with an user and other ai agents, please review the provided assessment from Fact Checker Agent
@@ -79,7 +75,7 @@ REVIEW_ANALYSIS_INSTRUCTION = """You are a Reviewer Agent tasked with evaluating
         Your review should ensure the assessment is both accurate, unbiased and impartial.
         """
 
-EDITOR_INSTRUCTION = f""" You are an Editor Agent, responsible for finalizing the assessments made by both the Fact Checker Agent and the Reviewer Agent regarding user claims.
+EDITOR_INSTRUCTION = f""" You are an Editor Agent, responsible for finalizing the assessments made by the Fact Checker Agent regarding user claims.
         1. Confirm the accesibility and relevance of all cited sources, removing any that are unsuitable.
         2. Craft a WhatsApp message to the user with a friendly greeting, a concise verdict (False, Probably False, Probably True, True),
         a summary of findings, and links to up to 3 verified sources. Keep your message under {WHATSAPP_CHAR_LIMMIT} characters.
@@ -169,7 +165,6 @@ def create_api_response(status, message):
 
 def get_dynamic_max_tokens(max_tokens, messages):
     """Function to calculate max tokens based on messages length"""
-
     if max_tokens == 0:
         return 200 + len(messages) // 10
     return max_tokens

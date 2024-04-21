@@ -69,7 +69,6 @@ def get_message(message):
 
     if type_message == 'text':
         text = message['text']['body']
-        print('text', text)
     elif type_message == 'interactive':
         text = ''
         if interaction_type == 'button_reply':
@@ -95,7 +94,7 @@ def send_template_message(recipient, template="hello_world"):
             "type": "template",
             "template": {"name": template, "language": {"code": "en_US"}},
         }
-        this_logger.info("sending... %s to %s", data, whatsapp_url)
+        this_logger.info("\nsending... %s to %s", data, whatsapp_url)
         data_json = json.dumps(data)
         response = requests.post(whatsapp_url,
                                  headers=headers,
@@ -112,7 +111,7 @@ def send_template_message(recipient, template="hello_world"):
 
 def send_message(recipient, message, message_type='text', language=None):
     """send message to Whatsapp"""
-    this_logger.info('Send Message: %s IN %s', message, language if language else 'english')
+    this_logger.info('\nSend Message: %s IN %s', message, language if language else 'english')
     try:
         data = {
             "messaging_product": "whatsapp",
@@ -120,14 +119,12 @@ def send_message(recipient, message, message_type='text', language=None):
             "to": recipient,
         }
         select_message_template(message_type, data, message, language)
-        this_logger.debug('sending data: %s', data)
         final_data = json.dumps(data)
-        this_logger.debug("sending...  %s to %s", final_data, whatsapp_url)
+        this_logger.debug("\nsending...  %s to %s", final_data, whatsapp_url)
         response = requests.post(whatsapp_url,
                                  headers=headers,
                                  data=final_data,
                                  timeout=20)
-        this_logger.debug('FINAL RESPONSE TO WHATSAPP: %s', response)
 
         return utils.create_api_response(response.status_code, 'message sent' if response.status_code == 200 else response.text)
 

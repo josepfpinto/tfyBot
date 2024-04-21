@@ -20,7 +20,7 @@ def translate_option(option, language=None):
     return option
 
 
-def get_main_menu(language=None):
+def get_main_menu():
     """Template: main menu options"""
     this_logger.debug('Getting main menu')
     return ({
@@ -47,7 +47,7 @@ def welcome_message(language=None):
         body_text = gpt.translate_gpt4(body_text, language)
         footer_text = gpt.translate_gpt4(footer_text, language)
 
-    this_logger.debug('Welcome message: %s AND %s', body_text, footer_text)
+    this_logger.info('\nWelcome message: %s AND %s', body_text, footer_text)
 
     return ({
         "type": "list",
@@ -61,18 +61,18 @@ def welcome_message(language=None):
         "footer": {
             "text": footer_text,
         },
-        "action": get_main_menu(language),
+        "action": get_main_menu(),
     })
 
 
-def embed_main_menu(message, language=None):
+def embed_main_menu(message):
     """Template: add main menu to message"""
     return ({
         "type": "list",
         "body": {
             "text": message,
         },
-        "action": get_main_menu(language),
+        "action": get_main_menu(),
     })
 
 
@@ -99,7 +99,7 @@ def add_more_menu(language=None):
 
 def select_message_template(message_type, data, message='', language=None):
     """Select a template for the message"""
-    this_logger.debug('Selecting message template in language %s', language)
+    this_logger.info('\nSelecting message template in language %s', language)
 
     if language and message:
             message = gpt.translate_gpt4(message, language)
@@ -117,7 +117,7 @@ def select_message_template(message_type, data, message='', language=None):
         data.update(
             {
                 "type": 'interactive',
-                "interactive": embed_main_menu(message, language),
+                "interactive": embed_main_menu(message),
             }
         )
     elif message_type == 'interactive_more_menu':

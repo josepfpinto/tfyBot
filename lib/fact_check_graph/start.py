@@ -13,12 +13,12 @@ this_logger = logger.configure_logging('GRAPH')
 
 # Define a new graph
 workflow = StateGraph(AgentState)
-workflow.add_node("Reviewer", reviewer_node)
+# workflow.add_node("Reviewer", reviewer_node)
 workflow.add_node("Fact_Checker", factchecker_node)
 workflow.add_node("Editor", editor_node)
 workflow.add_node("Supervisor", supervisor)
 
-this_logger.debug('members: %s', members)
+this_logger.debug('\nmembers: %s', members)
 for member in members:
     workflow.add_edge(member, "Supervisor")
 

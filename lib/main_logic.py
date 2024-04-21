@@ -26,7 +26,7 @@ def check_if_last_message_is_waiting_for_continuation(chat_history):
 
 def handle_text_message(number, message, language, message_id, timestamp):
     """Handles processing of text messages."""
-    this_logger.info('Processing text message.')
+    this_logger.info('\nProcessing text message.')
     chat_history = aws.get_chat_history(number)
 
     if check_if_last_message_is_waiting_for_continuation(chat_history):
@@ -60,7 +60,7 @@ def handle_text_message(number, message, language, message_id, timestamp):
 
 def handle_interactive_message(number, interaction_id, message, message_id, media_id, timestamp, language):
     """Handles processing of interactive messages."""
-    this_logger.info('Processing interactive message.')
+    this_logger.info('\nProcessing interactive message.')
     if interaction_id == "factcheck":
         return whatsapp.send_message(number, 'Ok then! Send your message and I’ll do my best to fact-check it. 😊', 'text', language)
     elif interaction_id == "buttonaddmore":
@@ -95,13 +95,16 @@ def process_message(body):
             message)
         this_logger.info(body)
 
+        this_logger.info('\n\n\n-----\n\nPROCESS MESSAGE: %s\n', final_message)
+        this_logger.info('message_id %s', message_id)
+
         try:
             # Check for repeated messages
             if aws.is_repeted_message(message_id):
                 return utils.create_api_response(200, 'repeated message')
 
             language = aws.get_user_language(number)
-            this_logger.info('user language: %s', language)
+            this_logger.debug('user language: %s', language)
 
             if type_message == 'text':
                 return handle_text_message(number, final_message, language, message_id, timestamp)

@@ -46,13 +46,13 @@ def supervisor_chain(agents):
     )
 
 
-members = ["Fact_Checker", "Reviewer", "Editor"]
+members = ["Fact_Checker", "Editor"]
 supervisor_chain = supervisor_chain(members)
 
 
 def supervisor(state):
     """Deploy Supervisor"""
-    this_logger.info("\nWe are inside SUPERVISOR :")
-    this_logger.info('%s\n', state)
+    this_logger.info("\n\nWe are inside SUPERVISOR :")
+    this_logger.debug('%s\n', state)
     result = supervisor_chain.invoke(state)
     return result

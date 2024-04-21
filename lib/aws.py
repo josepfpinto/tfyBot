@@ -39,13 +39,12 @@ if IS_OFFLINE:
 def get_chat_history(session_id):
     """Function that gets last user messages"""
     try:
-        this_logger.debug("get_chat_history")
+        this_logger.info("\nget_chat_history")
         response = sessionTable.query(
             IndexName="SessionIdTimestampIndex",
             KeyConditionExpression=Key("session_id").eq(session_id),
             ScanIndexForward=False,  # Fetch latest messages first
         )
-        this_logger.debug("response %s", response)
 
         messages = response["Items"]
 
@@ -89,8 +88,6 @@ def get_chat_history(session_id):
             if sumup_found:
                 break
 
-        this_logger.debug("1st formatted_history %s", formatted_history)
-
         # If no sumup message was found, limit the history to the most recent 4 messages
         if not sumup_found:
             this_logger.debug("no sumup found...")
@@ -98,18 +95,12 @@ def get_chat_history(session_id):
 
         # Check if the total character count exceeds the limit
         if total_chars > utils.HISTORY_CHAR_LIMMIT:
-            this_logger.debug(
-                "total_chars %s > utils.HISTORY_CHAR_LIMMIT %s",
-                total_chars,
-                utils.HISTORY_CHAR_LIMMIT,
-            )
             original_messages = utils.message_to_dict(messages)
             summary = summarize_with_gpt3_langchain(
                 "; ".join(original_messages), utils.HISTORY_CHAR_LIMMIT
             )
             formatted_history = [SystemMessage(content=summary, name="System")]
 
-        this_logger.debug("2nd formatted_history %s", formatted_history)
         return formatted_history
     except Exception as e:
         this_logger.error(
@@ -120,11 +111,10 @@ def get_chat_history(session_id):
 
 def is_repeted_message(message_id):
     """Checks if message_id exists in SessionTable."""
-    this_logger.debug("is_repeted_message: %s", message_id)
+    this_logger.info("is_repeted_message: %s", message_id)
     try:
         response = sessionTable.get_item(Key={"message_id": message_id})
         this_logger.debug("response %s", response)
-        this_logger.debug("'Item' in response? %s", "Item" in response)
         return "Item" in response
     except Exception as e:
         this_logger.error("Error checking if message is repeated: %s", e)
@@ -136,7 +126,7 @@ def save_in_db(
 ):
     """Saves message data into SessionTable."""
     try:
-        this_logger.debug('Saving message "%s" for %s.', message, number)
+        this_logger.debug('\nSaving message "%s" for %s.', message, number)
         sessionTable.put_item(
             Item={
                 "message_id": message_id,
@@ -165,7 +155,7 @@ def get_latest_message(number):
 
 def update_message(message, message_id):
     """Update a message for a given number from SessionTable."""
-    this_logger.debug('Updating message with %s for %s', message, message_id)
+    this_logger.info('\nUpdating message with %s for %s', message, message_id)
 
     sessionTable.update_item(
         Key={
@@ -181,10 +171,9 @@ def update_message(message, message_id):
 def wait_for_next_message(number):
     """Updates the latest message of a particular number in SessionTable with MESSAGE_TO_BE_CONTINUED_FLAG."""
     try:
-        this_logger.debug('Updating latest message with MESSAGE_TO_BE_CONTINUED_FLAG for %s.', number)
+        this_logger.info('\nUpdating latest message with MESSAGE_TO_BE_CONTINUED_FLAG for %s.', number)
 
         current_item = get_latest_message(number)
-        this_logger.debug('current_item: %s', current_item)
 
         if current_item:
             new_message = current_item['message'] + ' ' + utils.MESSAGE_TO_BE_CONTINUED_FLAG
@@ -200,7 +189,7 @@ def wait_for_next_message(number):
 def update_in_db(message, number):
     """Updates the latest message of a particular number in SessionTable."""
     try:
-        this_logger.debug('Updating latest message with "%s" for %s.', message, number)
+        this_logger.info('\nUpdating latest message with "%s" for %s.', message, number)
 
         current_item = get_latest_message(number)
 
@@ -225,20 +214,11 @@ def update_in_db(message, number):
 
 def confirm_if_new_msg(number, current_message_timestamp):
     """Checks if the last message timestamp is later than the current message timestamp."""
-    try:
-        response = sessionTable.query(
-            IndexName="SessionIdTimestampIndex",
-            KeyConditionExpression=Key("session_id").eq(number),
-            ScanIndexForward=False,  # Latest messages first
-            Limit=1,  # Only fetch the most recent message
-        )
-        this_logger.debug("response %s", response)
+    this_logger.info("\nconfirm_if_new_msg %s", number)
+    current_item = get_latest_message(number)
 
-        if not response["Items"]:
-            this_logger.debug("no items...")
-            return False
-
-        last_message_timestamp = Decimal(response["Items"][0]["timestamp"])
+    if current_item:
+        last_message_timestamp = Decimal(current_item["timestamp"])
         has_new_message = last_message_timestamp > current_message_timestamp
         this_logger.debug(
             "has_new_message %s = last_message_timestamp %s > current_message_timestamp %s",
@@ -248,23 +228,22 @@ def confirm_if_new_msg(number, current_message_timestamp):
         )
 
         if has_new_message:
-            this_logger.info("A more recent message exists. Stopping process.")
+            this_logger.info("A more recent message exists: %s. Stopping process.", current_item.get("message"))
 
         return has_new_message
-    except Exception as e:
-        this_logger.error("Error checking if there is a new message: %s", e)
+
+    else:
         return False
 
 
 def get_user_language(number):
     """Gets the user's preferred language."""
+    this_logger.info("\nget_user_language")
     try:
         response = usersTable.get_item(Key={"phone_number": number})
         this_logger.debug("response %s", response)
         if "Item" in response:
             return response["Item"].get("language", None)
-
-        this_logger.debug("no item...")
         return None
     except Exception as e:
         this_logger.error("Error fetching user language: %s", e)
@@ -273,6 +252,7 @@ def get_user_language(number):
 
 def change_user_language(number, new_language):
     """Changes the user's preferred language."""
+    this_logger.info("\nchange_user_language %s to %s", number, new_language)
     try:
         usersTable.update_item(
             Key={"phone_number": number},
@@ -280,7 +260,6 @@ def change_user_language(number, new_language):
             ExpressionAttributeNames={"#lang": "language"},
             ExpressionAttributeValues={":val": new_language},
         )
-        this_logger.info("Language updated for %s.", number)
         return True
     except Exception as e:
         this_logger.error("Error updating language for %s: %s", number, e)
@@ -289,6 +268,7 @@ def change_user_language(number, new_language):
 
 def add_user(phone_number):
     """Adds a new user with no preferred language."""
+    this_logger.info("\nadd_user %s", phone_number)
     try:
         usersTable.put_item(
             Item={
@@ -296,7 +276,6 @@ def add_user(phone_number):
                 "language": None,  # Indicates no preferred language set
             }
         )
-        this_logger.info("User %s added successfully.", phone_number)
         return True
     except Exception as e:
         this_logger.error("Error adding user %s: %s", phone_number, e)
