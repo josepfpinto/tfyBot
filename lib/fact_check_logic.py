@@ -43,6 +43,14 @@ def fact_check_message(number, message_id, media_id, timestamp, language=None):
     initial_state = construct_initial_state_with_history(chat_history)
     user_message = get_user_message_from_history(chat_history)
 
+    # Check if there are simmilar claims
+    simmilar_claims_result = aws.check_for_simmilar_claims(user_message)
+    if simmilar_claims_result['status'] == True:
+        return whatsapp.send_message(number, simmilar_claims_result['message'], 'interactive_main_menu', language)
+
+    else: # TO REMOVE
+        return utils.create_api_response(400, 'Failed to check for simmilar claims')
+
     # Fact Check
     response = graph.invoke(initial_state)
     final_message_content = response.get("messages")[-1].content

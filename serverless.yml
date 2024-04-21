@@ -107,6 +107,10 @@ resources:
             AttributeType: S
           - AttributeName: timestamp
             AttributeType: N
+          - AttributeName: type
+            AttributeType: S
+          - AttributeName: vector
+            AttributeType: S
         KeySchema:
           - AttributeName: message_id
             KeyType: HASH
@@ -120,6 +124,17 @@ resources:
               - AttributeName: "session_id"
                 KeyType: "HASH"
               - AttributeName: "timestamp"
+                KeyType: "RANGE"
+            Projection:
+              ProjectionType: "ALL"
+            ProvisionedThroughput:
+              ReadCapacityUnits: 2
+              WriteCapacityUnits: 2
+          - IndexName: "TypeVectorIndex"
+            KeySchema:
+              - AttributeName: "type"
+                KeyType: "HASH"
+              - AttributeName: "vector"
                 KeyType: "RANGE"
             Projection:
               ProjectionType: "ALL"

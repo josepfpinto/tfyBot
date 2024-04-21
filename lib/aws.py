@@ -8,6 +8,8 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from lib.gpt import summarize_with_gpt3_langchain
 from lib import utils, logger
+from gensim.models import Word2Vec
+from scipy import spatial
 
 this_logger = logger.configure_logging("AWS")
 
@@ -19,7 +21,7 @@ IS_OFFLINE = os.getenv("IS_OFFLINE") == "true"
 
 # DYNAMODB TABLES
 # UsersTable (phone_number:key-string, language:string)
-# SessionTable (message_id:key-string, session_id(phone_number:string), message:string, type:'bot'|'user'|'sumup', timestamp:Unix timestamp format))
+# SessionTable (message_id:key-string, vector:string, session_id(phone_number:string), message:string, type:'system'|'bot'|'user'|'sumup', timestamp:Unix timestamp format))
 # SessionIdTimestampIndex: Global Secondary Index (GSI) with session_id as the partition key and timestamp as the sort key
 
 dynamodb = boto3.resource("dynamodb")
@@ -34,6 +36,17 @@ if IS_OFFLINE:
         aws_access_key_id="fakeMyKeyId",
         aws_secret_access_key="fakeSecretAccessKey",
     )
+
+
+def vectorize(message):
+    """Vectorize message"""
+    # Load the model
+    model = Word2Vec.load("word2vec.model")
+
+    # Convert claim into a vector
+    claim_vector = model.wv[message]
+
+    return claim_vector
 
 
 def get_chat_history(session_id):
@@ -125,7 +138,7 @@ def is_repeted_message(message_id):
 
 
 def save_in_db(
-    message, number, message_id, message_type="bot", timestamp=utils.get_timestamp()
+    message, number, message_id, message_type="bot", timestamp=utils.get_timestamp(), to_vectorize=False
 ):
     """Saves message data into SessionTable."""
     try:
@@ -137,6 +150,7 @@ def save_in_db(
                 "message": message,
                 "timestamp": timestamp,
                 "type": message_type,
+                "vector": vectorize(message) if to_vectorize else "",
             }
         )
         return True
@@ -160,13 +174,17 @@ def update_message(message, message_id):
     """Update a message for a given number from SessionTable."""
     this_logger.info('\nUpdating message with %s for %s', message, message_id)
 
+    # Convert claim into a vector
+    claim_vector = vectorize(message)
+
     sessionTable.update_item(
         Key={
             'message_id': message_id
         },
-        UpdateExpression='SET message = :val1',
+        UpdateExpression='SET message = :val1, SET vector = :val2',
         ExpressionAttributeValues={
-            ':val1': message
+            ':val1': message,
+            ':val2': claim_vector
         }
     )
 
@@ -283,3 +301,45 @@ def add_user(phone_number):
     except Exception as e:
         this_logger.error("Error adding user %s: %s", phone_number, e)
         return False
+
+
+def check_for_simmilar_claims(message):
+    """Function to compare a claim vector with existing claim vectors"""
+    try:
+        # Convert claim into a vector
+        claim_vector = message.additional_kwargs["vector"]
+
+        # Query DynamoDB table to retrieve vectors of all existing claims
+        # these only exist on user type messages and have a vector string
+        response = sessionTable.query(
+            IndexName="TypeVectorIndex",
+            KeyConditionExpression=Key("type").eq("user"),
+            FilterExpression=Attr("vector").exists(),
+        )
+
+        # Find the most similar claim
+        most_similar_message = ""
+        highest_similarity = -1
+        for item in response.get("Items", []):
+            if item["message_id"] == message.id:
+                continue
+            existing_vector = item.get("vector", "")
+            similarity = 1 - spatial.distance.cosine(claim_vector, existing_vector)
+            if similarity > highest_similarity:
+                highest_similarity = similarity
+                most_similar_message = item.get("message", "")
+
+        # If the most similar claim is above a certain similarity threshold, fetch the answer
+        if highest_similarity > 0.85:
+            this_logger.info("A simmilar claim was found")
+            return {'claim': most_similar_message,
+                    'status': True}
+        else:
+            this_logger.info("No simmilar claim was found")
+            return {'claim': "No similar claim was found",
+                    'status': False}
+
+    except Exception as e:
+        this_logger.error("Error checking for simmilar claims: %s", e)
+        return {'claim': "No similar claim was found",
+                'status': False}

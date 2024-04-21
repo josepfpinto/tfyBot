@@ -44,7 +44,7 @@ def handle_text_message(number, message, language, message_id, timestamp):
         return utils.create_api_response(400, 'Failed to save system message to db')
     elif category.get('value') == 'FACTCHECK':
         this_logger.info('Fact-check requested.')
-        if aws.save_in_db(message, number, message_id, 'user', timestamp):
+        if aws.save_in_db(message, number, message_id, 'user', timestamp, True):
             this_logger.debug('Saved in DB')
             return whatsapp.send_message(number, '', 'interactive_more_menu', language)
         return utils.create_api_response(400, 'Failed to save user message to db')
