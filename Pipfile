@@ -12,7 +12,6 @@ openai = "*"
 langchain-openai = "*"
 langchain = "*"
 beautifulsoup4 = "*"
-gpt-researcher = "*"
 
 [dev-packages]
 
