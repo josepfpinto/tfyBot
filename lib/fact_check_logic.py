@@ -8,27 +8,16 @@ from lib.fact_check_graph.start import graph
 this_logger = logger.configure_logging('FACT_CHECK_LOGIC')
 
 
-def construct_initial_state_with_history(chat_history):
+def construct_initial_state_with_history(chat_history, user_message):
     """Construct initial state with chat history"""
+    if user_message is None:
+        return None
     initial_state = {
         "messages": [SystemMessage(
-            content="Factcheck last user message(s)")],
+            content="Factcheck this message: " + user_message.content)],
         "history": chat_history if chat_history else []
     }
     return initial_state
-
-
-def get_user_message_from_history(chat_history):
-    """Function to get the user message from the chat history"""
-    try:
-        this_logger.info("Getting user message from chat history")
-        message = next((msg for msg in chat_history if isinstance(msg, HumanMessage) and msg.name == 'User'), None)
-        this_logger.debug("User message: %s", message.content)
-        return message
-
-    except Exception as e:
-        this_logger.error("Error getting user message from chat history: %s", e)
-        return None
 
 
 def fact_check_message(number, message_id, media_id, timestamp, language=None):
@@ -40,8 +29,8 @@ def fact_check_message(number, message_id, media_id, timestamp, language=None):
 
     # Set initial state
     chat_history = aws.get_chat_history(number)
-    initial_state = construct_initial_state_with_history(chat_history)
-    user_message = get_user_message_from_history(chat_history)
+    user_message = aws.get_user_message_from_history(chat_history)
+    initial_state = construct_initial_state_with_history(chat_history, user_message)
 
     # Check if there are simmilar claims
     simmilar_claims_result = aws.check_for_simmilar_claims(user_message)

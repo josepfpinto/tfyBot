@@ -117,6 +117,7 @@ def get_chat_history(session_id):
             )
             formatted_history = [SystemMessage(content=summary, name="System")]
 
+        this_logger.debug("formatted_history %s", formatted_history)
         return formatted_history
     except Exception as e:
         this_logger.error(
@@ -189,17 +190,17 @@ def update_message(message, message_id):
     )
 
 
-def wait_for_next_message(number):
+def wait_for_next_message(chat_history):
     """Updates the latest message of a particular number in SessionTable with MESSAGE_TO_BE_CONTINUED_FLAG."""
     try:
-        this_logger.info('\nUpdating latest message with MESSAGE_TO_BE_CONTINUED_FLAG for %s.', number)
+        this_logger.info('\nUpdating latest message with MESSAGE_TO_BE_CONTINUED_FLAG.')
 
-        current_item = get_latest_message(number)
+        user_message = get_user_message_from_history(chat_history)
 
-        if current_item:
-            new_message = current_item['message'] + ' ' + utils.MESSAGE_TO_BE_CONTINUED_FLAG
+        if user_message:
+            new_message = user_message.content + ' ' + utils.MESSAGE_TO_BE_CONTINUED_FLAG
 
-            update_message(new_message, current_item['message_id'])
+            update_message(new_message, user_message.id)
 
         return True
     except Exception as e:
@@ -207,25 +208,38 @@ def wait_for_next_message(number):
         return False
 
 
-def update_in_db(message, number):
+def get_user_message_from_history(chat_history):
+    """Function to get the user message from the chat history"""
+    try:
+        this_logger.info("Getting user message from chat history")
+        message = next((msg for msg in chat_history if isinstance(msg, HumanMessage) and msg.name == 'User'), None)
+        this_logger.debug("User message: %s", message.content)
+        return message
+
+    except Exception as e:
+        this_logger.error("Error getting user message from chat history: %s", e)
+        return None
+
+
+def update_in_db(message, number, chat_history):
     """Updates the latest message of a particular number in SessionTable."""
     try:
         this_logger.info('\nUpdating latest message with "%s" for %s.', message, number)
 
-        current_item = get_latest_message(number)
+        old_message = get_user_message_from_history(chat_history)
 
-        if current_item:
-            current_message = current_item['message']
+        if old_message:
+            message_update = old_message.content
 
             # Check if the current message ends with utils.MESSAGE_TO_BE_CONTINUED_FLAG
-            if current_message.endswith(utils.MESSAGE_TO_BE_CONTINUED_FLAG):
+            if message_update.endswith(utils.MESSAGE_TO_BE_CONTINUED_FLAG):
                 # If it does, remove utils.MESSAGE_TO_BE_CONTINUED_FLAG and append the new message
-                current_message = current_message[:-len(utils.MESSAGE_TO_BE_CONTINUED_FLAG)] + message
+                message_update = message_update[:-len(utils.MESSAGE_TO_BE_CONTINUED_FLAG)] + message
             else:
                 # If it doesn't, just append the new message
-                current_message += message
+                message_update += message
 
-            update_message(current_message, current_item['message_id'])
+            update_message(message_update, old_message.id)
 
         return True
     except Exception as e:
