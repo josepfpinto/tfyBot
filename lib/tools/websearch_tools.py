@@ -30,7 +30,7 @@ search_serper = Tool(
     func=GoogleSerperAPIWrapper(serper_api_key=SERPER_API_KEY, k=3).results,
     description="Access to google search. Use this to obtain information about current events, to find support links, or to get info on how to write code.",
 )
-search_brave = BraveSearch.from_api_key(
+web_search = BraveSearch.from_api_key(
     api_key=BRAVE_API_KEY, search_kwargs={"count": 3})
 
 
@@ -55,10 +55,11 @@ def process_content(url: str, user_claim:str) -> str:
     """Processes content from a webpage with a html.parser"""
     try:
         this_logger.info("Processing content from %s", url)
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=15)
         soup = BeautifulSoup(
-            response.content, "lxml", from_encoding=response.encoding
+            response.content, 'lxml', from_encoding=response.encoding # "html.parser"
         )
+        this_logger.debug("Ready to extract")
 
         for script_or_style in soup(["script", "style"]):
             script_or_style.extract()
@@ -71,7 +72,9 @@ def process_content(url: str, user_claim:str) -> str:
         # Summarize Raw Data
         this_logger.debug("Starting to compress content...")
         context_compressor = ContextCompressor(documents=[{'raw_content': content}], embeddings=OpenAIEmbeddings())
+
         # Run Tasks
+        this_logger.debug("Fetching info based on user claim: %s", user_claim)
         context_compressed = context_compressor.get_context(user_claim, max_results=3)
         this_logger.debug("Content compressed: %s", context_compressed)
         return context_compressed
@@ -106,6 +109,6 @@ def no_tool():
     """This tool does nothing"""
 
 
-tools_fact_checker = [search_brave, process_content]
-tools_reviewer = [search_brave, process_content]
+tools_fact_checker = [web_search, process_content]
+tools_reviewer = [web_search, process_content]
 tools_editor = [no_tool]

@@ -28,15 +28,20 @@ MAX_TOKENS = 0
 MESSAGE_TO_BE_CONTINUED_FLAG = '[cont.]'
 
 SUPERVISOR_PROMPT = """As a Supervisor of a fact checker bot, your role is to oversee
-        a dialogue between these workers: {AGENTS}.
-        Based on the user's request and chat history,
-        determine which worker should take the next action. Each worker is responsible for
-        executing a specific task and reporting back their findings and progress.
-        The Fact_Checker Agent should be the first to engage as he is responsible
-        for correctly fact check only the last user message.
-        Then the result should be presented to the Editor Agent that will create the
-        final message to be sent to the user, based on the previous findings.
-        Once all tasks are complete, indicate with 'FINISH'."""
+        a dialogue between these workers: {AGENTS}. And to identify when the conversation
+        is complete and the final message from the editor ready to be sent 'FINISH'.
+        Based on the user's request and chat history, determine which worker should take
+        the next action or if the response is ready to be sent to the user 'FINISH'.
+        Each worker is responsible for executing a specific task and reporting back their
+        findings and progress.
+        1. The Fact_Checker Agent should be the first to engage as
+        he is responsible for correctly fact check only the last user message.
+        2. Then the result should be presented to the Editor Agent that will create the
+        final message to be sent to the user, based on the previous findings. Note that
+        after the Editor Agent has finished, it should not go back to Fact_Checker Agent
+        - at best the task could be done again by the Editor Agent.
+        3. Once both these tasks are complete, indicate with 'FINISH' to send
+        the message to the user."""
 SUPERVISOR_QUESTION = """Given the conversation above, who should act next?
         Or should we FINISH? Select one of: {OPTIONS}"""
 
@@ -56,14 +61,16 @@ SUMMARIZE_JSON_KEYS = """{summarized_message: <summarized message>}"""
 SUMMARIZE = """Summarize the following chat history, refering to who said what, up to a max of {CHAR_LIMIT} chars.
     Format of the response should be a json (ready to be converted by json.loads) with these keys: {SUMMARIZE_JSON_KEYS}"""
 
-ANALYSE_USER_MESSAGE = """ You are a Fact Checker Agent. Your task involves analyzing user claims in a chat conversation step by step.
+ANALYSE_USER_MESSAGE = """ You are a Fact Checker Agent. Your task involves analyzing user claims in a chat conversation step by step and by using the web_search and process_content tools.
         Based on this chat conversation with an user and other ai agents, analyse the content of the user claim(s) and provide an assessment of its truthfulness.
-        0. Ignore what has already been fact cheked on the message history - usually older messages.
-        1. Identify up to 3 topics from the user's messages that still need to be checked.
-        2. Conduct internet searches on each topic, one at a time.
-        3. Assess the truthfulness of the claims, categorizing them as FALSE, PROBABLY FALSE, PROBABLY TRUE, or TRUE. And provide
+        1. Ignore what has already been fact cheked on the message history - usually older messages.
+        2. Identify up to 3 topics from the user's messages that still need to be checked.
+        3. Conduct internet searches on each topic, one at a time, using web_search tool to find urls and process_content tool to process the content of those urls.
+        4. If you can't find any relevant information, repeat the internet searches on each topic one more time and select different sources using web_search tool
+        and process them with process_content tool.
+        4. Finally, assess the truthfulness of the claims, categorizing them as FALSE, PROBABLY FALSE, PROBABLY TRUE, or TRUE. And provide
         a straightforward explanation for your assessment, supported by up to 3 credible sources. If reliable sources are not available, state so.
-        4. Ensure your final response is concise, objective, unbiased and based on factual evidence.
+        5. Ensure your final response is concise, objective, unbiased and based on factual evidence.
         """
 REVIEW_ANALYSIS_INSTRUCTION = """You are a Reviewer Agent tasked with evaluating the Fact Checker Agent's analysis of the latest user claims.
         Based on this chat conversation with an user and other ai agents, please review the provided assessment from Fact Checker Agent
@@ -76,10 +83,9 @@ REVIEW_ANALYSIS_INSTRUCTION = """You are a Reviewer Agent tasked with evaluating
         """
 
 EDITOR_INSTRUCTION = f""" You are an Editor Agent, responsible for finalizing the assessments made by the Fact Checker Agent regarding user claims.
-        1. Confirm the accesibility and relevance of all cited sources, removing any that are unsuitable.
-        2. Craft a WhatsApp message to the user with a friendly greeting, a concise verdict (False, Probably False, Probably True, True),
+        1. Craft a WhatsApp message to the user with a friendly greeting, a concise verdict (False, Probably False, Probably True, True),
         a summary of findings, and links to up to 3 verified sources. Keep your message under {WHATSAPP_CHAR_LIMMIT} characters.
-        3. Your output should be only the WhatsApp message for the user in the format indicated in point 2, without any additional information, context or introduction.
+        2. Your output should be only the WhatsApp message for the user in the format indicated in point 2, without any additional information, context or introduction.
         Your role is to ensure the final message is clear, and user-friendly.
         """
 
