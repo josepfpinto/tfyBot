@@ -4,12 +4,13 @@ import os
 from decimal import Decimal
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from dotenv import load_dotenv
+from elasticsearch import Elasticsearch, RequestsHttpConnection
+from requests_aws4auth import AWS4Auth
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Key
 from lib.gpt import summarize_with_gpt3_langchain
 from lib import utils, logger
 from gensim.models import Word2Vec
-from scipy import spatial
 
 this_logger = logger.configure_logging("AWS")
 
@@ -21,12 +22,42 @@ IS_OFFLINE = os.getenv("IS_OFFLINE") == "true"
 
 # DYNAMODB TABLES
 # UsersTable (phone_number:key-string, language:string)
-# SessionTable (message_id:key-string, vector:string, session_id(phone_number:string), message:string, type:'system'|'bot'|'user'|'sumup', timestamp:Unix timestamp format))
+# SessionTable (message_id:key-string, session_id(phone_number:string), message:string, type:'system'|'bot'|'user'|'sumup', timestamp:Unix timestamp format))
 # SessionIdTimestampIndex: Global Secondary Index (GSI) with session_id as the partition key and timestamp as the sort key
 
 dynamodb = boto3.resource("dynamodb")
 sessionTable = dynamodb.Table(SESSIONS_TABLE)
 usersTable = dynamodb.Table(USERS_TABLE)
+
+
+def get_opensearch_host(domain_name):
+    client = boto3.client("es")
+    response = client.describe_elasticsearch_domain(DomainName=domain_name)
+    return response["DomainStatus"]["Endpoint"]
+
+
+# Create a new AWS4Auth object
+REGION = os.getenv("REGION")
+OPENSEARCH_HOST = get_opensearch_host("MyOpenSearchDomain")
+service = "es"
+credentials = boto3.Session().get_credentials()
+awsauth = AWS4Auth(
+    credentials.access_key,
+    credentials.secret_key,
+    REGION,
+    service,
+    session_token=credentials.token,
+)
+
+this_logger.debug("OPENSEARCH_HOST: %s", OPENSEARCH_HOST)
+
+es = Elasticsearch(
+    hosts=[{"host": OPENSEARCH_HOST, "port": 443}],
+    http_auth=awsauth,
+    use_ssl=True,
+    verify_certs=True,
+    connection_class=RequestsHttpConnection,
+)
 
 if IS_OFFLINE:
     dynamodb = boto3.resource(
@@ -36,6 +67,7 @@ if IS_OFFLINE:
         aws_access_key_id="fakeMyKeyId",
         aws_secret_access_key="fakeSecretAccessKey",
     )
+    es = Elasticsearch(hosts=[{"host": "localhost", "port": 9200}], http_auth=awsauth)
 
 
 def vectorize(message):
@@ -79,7 +111,9 @@ def get_chat_history(session_id):
             if message["type"] == "bot":
                 this_logger.debug("type bot")
                 formatted_message = AIMessage(
-                    content=message["message"], name="Fact_Checker", id=message["message_id"]
+                    content=message["message"],
+                    name="Fact_Checker",
+                    id=message["message_id"],
                 )
             elif message["type"] == "sumup":
                 this_logger.debug("type sumup")
@@ -139,9 +173,28 @@ def is_repeted_message(message_id):
 
 
 def save_in_db(
-    message, number, message_id, message_type="bot", timestamp=utils.get_timestamp(), to_vectorize=False
+    message,
+    number,
+    message_id,
+    message_type="bot",
+    timestamp=utils.get_timestamp(),
+    to_vectorize=False,
 ):
     """Saves message data into SessionTable."""
+    # Save as vector
+    try:
+        if to_vectorize and message_type == "user":
+            message_vector = vectorize(message)
+            es.index(
+                index="messages",
+                id=message_id,
+                body={"message": message, "vector": message_vector.tolist()},
+            )
+    except Exception as e:
+        this_logger.error("Error vectorizing message: %s", e)
+        return False
+
+    # Save into dynamodb
     try:
         this_logger.debug('\nSaving message "%s" for %s.', message, number)
         sessionTable.put_item(
@@ -151,7 +204,6 @@ def save_in_db(
                 "message": message,
                 "timestamp": timestamp,
                 "type": message_type,
-                "vector": vectorize(message) if to_vectorize else "",
             }
         )
         return True
@@ -163,42 +215,51 @@ def save_in_db(
 def get_latest_message(number):
     """Retrieve the latest message for a given number from SessionTable."""
     response = sessionTable.query(
-        IndexName='SessionIdTimestampIndex',
-        KeyConditionExpression=Key('session_id').eq(number),
+        IndexName="SessionIdTimestampIndex",
+        KeyConditionExpression=Key("session_id").eq(number),
         ScanIndexForward=False,  # This makes the query return results in descending order of sort key
-        Limit=1  # We only need the latest item
+        Limit=1,  # We only need the latest item
     )
-    return response['Items'][0] if response['Items'] else None
+    return response["Items"][0] if response["Items"] else None
 
 
 def update_message(message, message_id):
     """Update a message for a given number from SessionTable."""
-    this_logger.info('\nUpdating message with %s for %s', message, message_id)
+    this_logger.info("\nUpdating message with %s for %s", message, message_id)
 
-    # Convert claim into a vector
-    claim_vector = vectorize(message)
+    # Save as vector
+    try:
+        message_vector = vectorize(message)
+        es.index(
+            index="messages",
+            id=message_id,
+            body={"message": message, "vector": message_vector.tolist()},
+        )
+    except Exception as e:
+        this_logger.error("Error vectorizing message: %s", e)
+        return False
 
+    # Save into dynamodb
     sessionTable.update_item(
-        Key={
-            'message_id': message_id
-        },
-        UpdateExpression='SET message = :val1, SET vector = :val2',
+        Key={"message_id": message_id},
+        UpdateExpression="SET message = :val1",
         ExpressionAttributeValues={
-            ':val1': message,
-            ':val2': claim_vector
-        }
+            ":val1": message,
+        },
     )
 
 
 def wait_for_next_message(chat_history):
     """Updates the latest message of a particular number in SessionTable with MESSAGE_TO_BE_CONTINUED_FLAG."""
     try:
-        this_logger.info('\nUpdating latest message with MESSAGE_TO_BE_CONTINUED_FLAG.')
+        this_logger.info("\nUpdating latest message with MESSAGE_TO_BE_CONTINUED_FLAG.")
 
         user_message = get_user_message_from_history(chat_history)
 
         if user_message:
-            new_message = user_message.content + ' ' + utils.MESSAGE_TO_BE_CONTINUED_FLAG
+            new_message = (
+                user_message.content + " " + utils.MESSAGE_TO_BE_CONTINUED_FLAG
+            )
 
             update_message(new_message, user_message.id)
 
@@ -212,7 +273,14 @@ def get_user_message_from_history(chat_history):
     """Function to get the user message from the chat history"""
     try:
         this_logger.info("Getting user message from chat history")
-        message = next((msg for msg in chat_history if isinstance(msg, HumanMessage) and msg.name == 'User'), None)
+        message = next(
+            (
+                msg
+                for msg in chat_history
+                if isinstance(msg, HumanMessage) and msg.name == "User"
+            ),
+            None,
+        )
         this_logger.debug("User message: %s", message.content)
         return message
 
@@ -234,7 +302,9 @@ def update_in_db(message, number, chat_history):
             # Check if the current message ends with utils.MESSAGE_TO_BE_CONTINUED_FLAG
             if message_update.endswith(utils.MESSAGE_TO_BE_CONTINUED_FLAG):
                 # If it does, remove utils.MESSAGE_TO_BE_CONTINUED_FLAG and append the new message
-                message_update = message_update[:-len(utils.MESSAGE_TO_BE_CONTINUED_FLAG)] + message
+                message_update = (
+                    message_update[: -len(utils.MESSAGE_TO_BE_CONTINUED_FLAG)] + message
+                )
             else:
                 # If it doesn't, just append the new message
                 message_update += message
@@ -263,7 +333,10 @@ def confirm_if_new_msg(number, current_message_timestamp):
         )
 
         if has_new_message:
-            this_logger.info("A more recent message exists: %s. Stopping process.", current_item.get("message"))
+            this_logger.info(
+                "A more recent message exists: %s. Stopping process.",
+                current_item.get("message"),
+            )
 
         return has_new_message
 
@@ -321,39 +394,56 @@ def check_for_simmilar_claims(message):
     """Function to compare a claim vector with existing claim vectors"""
     try:
         # Convert claim into a vector
-        claim_vector = message.additional_kwargs["vector"]
+        message_vector = vectorize(message.content)
 
-        # Query DynamoDB table to retrieve vectors of all existing claims
-        # these only exist on user type messages and have a vector string
-        response = sessionTable.query(
-            IndexName="TypeVectorIndex",
-            KeyConditionExpression=Key("type").eq("user"),
-            FilterExpression=Attr("vector").exists(),
-        )
+        # Use OpenSearch's script_score function to compute the cosine similarity
+        query = {
+            "script_score": {
+                "query": {
+                    "bool": {
+                        "must": {"match_all": {}},
+                        "must_not": {"term": {"_id": message.id}},
+                    }
+                },
+                "script": {
+                    "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
+                    "params": {"query_vector": message_vector.tolist()},
+                },
+            }
+        }
+        response = es.search(index="messages", body={"query": query})
 
-        # Find the most similar claim
-        most_similar_message = ""
-        highest_similarity = -1
-        for item in response.get("Items", []):
-            if item["message_id"] == message.id:
-                continue
-            existing_vector = item.get("vector", "")
-            similarity = 1 - spatial.distance.cosine(claim_vector, existing_vector)
-            if similarity > highest_similarity:
-                highest_similarity = similarity
-                most_similar_message = item.get("message", "")
+        # If a similar message is found and its score is above the threshold, fetch the answer
+        similarity_threshold = 0.75
+        if response["hits"]["hits"]:
+            this_logger.debug("Simmilar claim was found!")
+            most_similar_message_score = response["hits"]["hits"][0]["_score"]
+            if most_similar_message_score >= similarity_threshold:
+                this_logger.info(
+                    "Simmilar claim was found: %s",
+                    response["hits"]["hits"][0]["_source"]["message"],
+                )
+                most_similar_message_id = response["hits"]["hits"][0]["_id"]
+                this_logger.debug(
+                    "most_similar_message_id: %s", most_similar_message_id
+                )
 
-        # If the most similar claim is above a certain similarity threshold, fetch the answer
-        if highest_similarity > 0.85:
-            this_logger.info("A simmilar claim was found")
-            return {'claim': most_similar_message,
-                    'status': True}
-        else:
-            this_logger.info("No simmilar claim was found")
-            return {'claim': "No similar claim was found",
-                    'status': False}
+                # fetching fact check from dynamodb
+                response = sessionTable.get_item(
+                    Key={"message_id": f"{most_similar_message_id}_r"}
+                )
+                if "Item" in response:
+                    this_logger.info(
+                        "Fact check of message found: %s", response["Item"]
+                    )
+                    return {
+                        "claim_fact_check": response["Item"].message,
+                        "status": False,
+                    }
+
+        this_logger.info("No simmilar claim was found")
+        return {"claim_fact_check": "No similar claim was found", "status": False}
 
     except Exception as e:
         this_logger.error("Error checking for simmilar claims: %s", e)
-        return {'claim': "No similar claim was found",
-                'status': False}
+        return {"claim_fact_check": "No similar claim was found", "status": False}

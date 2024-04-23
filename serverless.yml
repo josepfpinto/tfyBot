@@ -52,6 +52,7 @@ provider:
     LANGCHAIN_API_KEY: ${env:LANGCHAIN_API_KEY, ''}
     LANGCHAIN_PROJECT: ${env:LANGCHAIN_PROJECT, ''}
     LANGCHAIN_ENDPOINT: ${env:LANGCHAIN_ENDPOINT, ''}
+    REGION: ${env:REGION, ''}
     USERS_TABLE: ${self:custom.usersTableName}
     SESSIONS_TABLE: ${self:custom.sessionsTableName}
   # profile: ${opt:profile, 'default'}  # Use the 'serverless deploy --profile serverless_admin' or defaults to 'default'
@@ -71,6 +72,16 @@ provider:
       Action:
         - dynamodb:Query
       Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.sessionsTableName}/index/SessionIdTimestampIndex"
+    - Effect: Allow
+      Action:
+        - 'es:*'
+      Resource: 'arn:aws:es:${self:provider.region}:*:domain/opensearch-tfybot/*'
+  vpc:
+    securityGroupIds:
+      - Ref: MySecurityGroup
+    subnetIds:
+      - Ref: PublicSubnetA
+      - Ref: PublicSubnetB
 
 functions:
   app:
@@ -109,8 +120,6 @@ resources:
             AttributeType: N
           - AttributeName: type
             AttributeType: S
-          - AttributeName: vector
-            AttributeType: S
         KeySchema:
           - AttributeName: message_id
             KeyType: HASH
@@ -130,17 +139,66 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 2
               WriteCapacityUnits: 2
-          - IndexName: "TypeVectorIndex"
-            KeySchema:
-              - AttributeName: "type"
-                KeyType: "HASH"
-              - AttributeName: "vector"
-                KeyType: "RANGE"
-            Projection:
-              ProjectionType: "ALL"
-            ProvisionedThroughput:
-              ReadCapacityUnits: 2
-              WriteCapacityUnits: 2
+    # VPC
+    MyVPC:
+      Type: "AWS::EC2::VPC"
+      Properties:
+        CidrBlock: "10.0.0.0/16"
+        EnableDnsSupport: true
+        EnableDnsHostnames: true
+        Tags:
+          - Key: "Name"
+            Value: "MyVPC"
+    PublicSubnetA:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId:
+          Ref: "MyVPC"
+        CidrBlock: "10.0.1.0/24"
+        AvailabilityZone: "${self:provider.region}a"
+        Tags:
+          - Key: "Name"
+            Value: "PublicSubnetA"
+    PublicSubnetB:
+      Type: "AWS::EC2::Subnet"
+      Properties:
+        VpcId:
+          Ref: "MyVPC"
+        CidrBlock: "10.0.2.0/24"
+        AvailabilityZone: "${self:provider.region}b"
+        Tags:
+          - Key: "Name"
+            Value: "PublicSubnetB"
+    MySecurityGroup:
+      Type: "AWS::EC2::SecurityGroup"
+      Properties:
+        GroupDescription: "My security group"
+        VpcId:
+          Ref: "MyVPC"
+        SecurityGroupIngress:
+          - IpProtocol: "tcp"
+            FromPort: 80
+            ToPort: 80
+            CidrIp: "0.0.0.0/0"
+    #ElasticSearch
+    MyOpenSearchDomain:
+      Type: "AWS::OpenSearchService::Domain"
+      Properties:
+        DomainName: "opensearch-tfybot"
+        EngineVersion: "OpenSearch_1.0"
+        ClusterConfig:
+          InstanceType: "t2.small.search"
+          InstanceCount: 1
+        VPCOptions:
+          SubnetIds:
+            - PublicSubnetA
+            - PublicSubnetB
+          SecurityGroupIds:
+            - MySecurityGroup
+        EBSOptions:
+          EBSEnabled: true
+          VolumeType: "gp2"
+          VolumeSize: 10
 
 package:
   include:
