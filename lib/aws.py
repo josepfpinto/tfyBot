@@ -10,7 +10,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 from lib.gpt import summarize_with_gpt3_langchain
 from lib import utils, logger
-from gensim.models import Word2Vec
+from langchain_openai import OpenAIEmbeddings
 
 this_logger = logger.configure_logging("AWS")
 
@@ -70,13 +70,13 @@ if IS_OFFLINE:
     es = Elasticsearch(hosts=[{"host": "localhost", "port": 9200}], http_auth=awsauth)
 
 
-def vectorize(message):
+def vectorize(message: str):
     """Vectorize message"""
     # Load the model
-    model = Word2Vec.load("word2vec.model")
+    embeddings = OpenAIEmbeddings()
 
     # Convert claim into a vector
-    claim_vector = model.wv[message]
+    claim_vector = embeddings.embed_query(message)
 
     return claim_vector
 
