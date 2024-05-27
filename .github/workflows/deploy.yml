@@ -21,6 +21,7 @@ jobs:
       run: |
         pip install pipenv
         pipenv install --deploy --dev
+        rm -rf node_modules package-lock.json
         npm install -g serverless
         npm install serverless-python-requirements
 
@@ -29,6 +30,13 @@ jobs:
 
     - name: Check size of deployment package
       run: du -sh .serverless/*
+
+    - name: Check size and number of files in unzipped deployment package
+      run: |
+        unzip .serverless/serverless-flask.zip -d unzipped
+        du -sh unzipped
+        find unzipped -type f | wc -l
+        rm -rf unzipped
 
     - name: Deploy with Serverless
       env:
