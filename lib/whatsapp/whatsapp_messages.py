@@ -1,29 +1,30 @@
 """Whatsapp template messages"""
+
 from lib.whatsapp.whatsapp_interactions import filter_keys, options
 from lib import utils, gpt, logger
 
-exclude_keys = ['']
+exclude_keys = [""]
 
-this_logger = logger.configure_logging('WHATSAPP_MESSAGES')
+this_logger = logger.configure_logging("WHATSAPP_MESSAGES")
 
 
 def translate_option(option, language=None):
     """Translate the option"""
-    this_logger.debug('Translating option')
+    this_logger.debug("Translating option")
     if language:
-        this_logger.debug('Option: %s', option)
-        if 'title' in option:
-            option['title'] = gpt.translate_gpt4(option['title'], language)
-        if 'reply' in option and 'title' in option['reply']:
-            option['reply']['title'] = gpt.translate_gpt4(option['reply']['title'], language)
-    this_logger.debug('Translated option: %s', option)
+        this_logger.debug("Option: %s", option)
+        if "title" in option:
+            option["title"] = gpt.translate(option["title"], language)
+        if "reply" in option and "title" in option["reply"]:
+            option["reply"]["title"] = gpt.translate(option["reply"]["title"], language)
+    this_logger.debug("Translated option: %s", option)
     return option
 
 
 def get_main_menu():
     """Template: main menu options"""
-    this_logger.debug('Getting main menu')
-    return ({
+    this_logger.debug("Getting main menu")
+    return {
         "button": "Menu",
         "sections": [
             {
@@ -35,21 +36,21 @@ def get_main_menu():
                 ],
             },
         ],
-    })
+    }
 
 
 def welcome_message(language=None):
     """Template: welcome message template"""
 
-    body_text = '🤖 Hi! I’m an AI bot designed to be your informal fact checker, committed to Non-partisanship and Fairness, but without guarantees.'
-    footer_text = 'What do you want to do? Check the menu.'
+    body_text = "🤖 Hi! I’m an AI bot designed to be your informal fact checker, committed to Non-partisanship and Fairness, but without guarantees."
+    footer_text = "What do you want to do? Check the menu."
     if language:
-        body_text = gpt.translate_gpt4(body_text, language)
-        footer_text = gpt.translate_gpt4(footer_text, language)
+        body_text = gpt.translate(body_text, language)
+        footer_text = gpt.translate(footer_text, language)
 
-    this_logger.info('\nWelcome message: %s AND %s', body_text, footer_text)
+    this_logger.info("\nWelcome message: %s AND %s", body_text, footer_text)
 
-    return ({
+    return {
         "type": "list",
         "header": {
             "type": "text",
@@ -62,27 +63,27 @@ def welcome_message(language=None):
             "text": footer_text,
         },
         "action": get_main_menu(),
-    })
+    }
 
 
 def embed_main_menu(message):
     """Template: add main menu to message"""
-    return ({
+    return {
         "type": "list",
         "body": {
             "text": message,
         },
         "action": get_main_menu(),
-    })
+    }
 
 
 def add_more_menu(language=None):
     """Template: ask the user to confirm if they want to add more info or not"""
-    body_text = 'Ready to fact check?'
+    body_text = "Ready to fact check?"
     if language:
-        body_text = gpt.translate_gpt4(body_text, language)
+        body_text = gpt.translate(body_text, language)
 
-    return ({
+    return {
         "type": "button",
         "body": {
             "text": body_text,
@@ -94,45 +95,48 @@ def add_more_menu(language=None):
                 filter_keys(options["buttoncancel"], exclude_keys),
             ],
         },
-    })
+    }
 
 
-def select_message_template(message_type, data, message='', language=None):
+def select_message_template(message_type, data, message="", language=None):
     """Select a template for the message"""
-    this_logger.info('\nSelecting message template in language %s', language)
+    this_logger.info("\nSelecting message template in language %s", language)
 
     if language and message:
-            message = gpt.translate_gpt4(message, language)
+        message = gpt.translate(message, language)
 
-    if message_type == 'text':
-        this_logger.debug('Adding text message')
+    if message_type == "text":
+        this_logger.debug("Adding text message")
         data.update(
             {
-                "type": 'text',
-                "text": {"preview_url": False, "body": utils.process_text_for_whatsapp(message)},
+                "type": "text",
+                "text": {
+                    "preview_url": False,
+                    "body": utils.process_text_for_whatsapp(message),
+                },
             }
         )
-    elif message_type == 'interactive_main_menu':
-        this_logger.debug('Adding main menu')
+    elif message_type == "interactive_main_menu":
+        this_logger.debug("Adding main menu")
         data.update(
             {
-                "type": 'interactive',
+                "type": "interactive",
                 "interactive": embed_main_menu(message),
             }
         )
-    elif message_type == 'interactive_more_menu':
-        this_logger.debug('Adding more menu')
+    elif message_type == "interactive_more_menu":
+        this_logger.debug("Adding more menu")
         data.update(
             {
-                "type": 'interactive',
+                "type": "interactive",
                 "interactive": add_more_menu(language),
             }
         )
-    elif message_type == 'interactive_welcome':
-        this_logger.debug('Adding welcome message')
+    elif message_type == "interactive_welcome":
+        this_logger.debug("Adding welcome message")
         data.update(
             {
-                "type": 'interactive',
+                "type": "interactive",
                 "interactive": welcome_message(language),
             }
         )

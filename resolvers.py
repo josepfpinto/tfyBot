@@ -4,7 +4,7 @@ import os
 import json
 from flask import request, Blueprint
 from dotenv import load_dotenv
-from lib import main_logic, utils, logger, aws
+from lib import main_logic, utils, logger
 from lib.whatsapp import whatsapp
 from lib.whatsapp.security import signature_required
 

@@ -36,6 +36,7 @@ provider:
   region: eu-west-1
   environment:
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    SERVERLESS_ACCESS_KEY: ${env:SERVERLESS_ACCESS_KEY, ''}
     PERPLEXITY_API_KEY: ${env:PERPLEXITY_API_KEY, ''}
     TAVILY_API_KEY: ${env:TAVILY_API_KEY, ''}
     SERPER_API_KEY: ${env:SERPER_API_KEY, ''}
