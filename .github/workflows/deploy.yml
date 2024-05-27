@@ -28,7 +28,7 @@ jobs:
     - name: Package dependencies
       run: |
         mkdir python
-        pipenv lock -r > requirements.txt
+        pipenv run pip freeze > requirements.txt
         pip install -r requirements.txt --target python/
 
     - name: Compress dependencies
