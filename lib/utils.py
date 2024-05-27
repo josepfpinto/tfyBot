@@ -12,6 +12,7 @@ this_logger = logger.configure_logging("UTILS")
 
 class RequestType:
     """Function to calculate cost based on number of tokens"""
+
     def __enum__(self):
         pass
 
@@ -25,7 +26,7 @@ SUMUP_CHAR_LIMMIT = 450
 HISTORY_CHAR_LIMMIT = 3500
 MAX_TOKENS = 0
 
-MESSAGE_TO_BE_CONTINUED_FLAG = '[cont.]'
+MESSAGE_TO_BE_CONTINUED_FLAG = "[cont.]"
 
 SUPERVISOR_PROMPT = """As a Supervisor of a fact checker bot, your role is to oversee
         a dialogue between these workers: {AGENTS}. And to identify when the conversation
@@ -54,7 +55,7 @@ CATEGORIZE_USER_MESSAGE = """Categorize the next user (human) message into one o
     with these keys: {CATEGORIZE_USER_MESSAGE_JSON_KEYS}"""
 
 TRANSLATE_JSON_KEYS = """{translated_message: <translated message | empty string>}"""
-TRANSLATE = """If necessary, translate the following message to {LANGUAGE}. If no translation is necessary send an empty string.
+TRANSLATE = """Translate the following message to {LANGUAGE}.
     Format of the response should be a json (ready to be converted by json.loads) with these keys: {TRANSLATE_JSON_KEYS}"""
 
 SUMMARIZE_JSON_KEYS = """{summarized_message: <summarized message>}"""
