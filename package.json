@@ -1,7 +1,7 @@
 {
   "name": "tfyBot",
   "version": "1.0.0",
-  "description": "Example of a Python Flask API service backed by DynamoDB with traditional Serverless Framework",
+  "description": "Think for Yourself Bot - Fact-checking bot for WhtsApp",
   "author": "",
   "devDependencies": {
     "@aws-sdk/util-endpoints": "^3.540.0",

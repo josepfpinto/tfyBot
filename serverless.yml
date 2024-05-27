@@ -7,7 +7,7 @@ plugins:
   - serverless-wsgi
   - serverless-offline
   - serverless-dynamodb-local
-  - serverless-dotenv-plugin
+  # - serverless-dotenv-plugin
 
 custom:
   usersTableName: "users-table-${self:provider.stage}"
@@ -131,6 +131,8 @@ resources:
               WriteCapacityUnits: 2
 
 package:
+  exclude:
+    - .serverless/**
   include:
     - .venv/lib/python3.8/site-packages/pydantic/**
     - .venv/lib/python3.8/site-packages/pydantic_core/**

@@ -8,17 +8,17 @@ exclude_keys = [""]
 this_logger = logger.configure_logging("WHATSAPP_MESSAGES")
 
 
-def translate_option(option, language=None):
-    """Translate the option"""
-    this_logger.debug("Translating option")
-    if language:
-        this_logger.debug("Option: %s", option)
-        if "title" in option:
-            option["title"] = gpt.translate(option["title"], language)
-        if "reply" in option and "title" in option["reply"]:
-            option["reply"]["title"] = gpt.translate(option["reply"]["title"], language)
-    this_logger.debug("Translated option: %s", option)
-    return option
+# def translate_option(option, language=None):
+#     """Translate the option"""
+#     this_logger.debug("Translating option")
+#     if language:
+#         this_logger.debug("Option: %s", option)
+#         if "title" in option:
+#             option["title"] = gpt.translate(option["title"], language)
+#         if "reply" in option and "title" in option["reply"]:
+#             option["reply"]["title"] = gpt.translate(option["reply"]["title"], language)
+#     this_logger.debug("Translated option: %s", option)
+#     return option
 
 
 def get_main_menu():
@@ -44,7 +44,7 @@ def welcome_message(language=None):
 
     body_text = "🤖 Hi! I’m an AI bot designed to be your informal fact checker, committed to Non-partisanship and Fairness, but without guarantees."
     footer_text = "What do you want to do? Check the menu."
-    if language:
+    if language and "english" not in language.lower():
         body_text = gpt.translate(body_text, language)
         footer_text = gpt.translate(footer_text, language)
 
@@ -80,7 +80,7 @@ def embed_main_menu(message):
 def add_more_menu(language=None):
     """Template: ask the user to confirm if they want to add more info or not"""
     body_text = "Ready to fact check?"
-    if language:
+    if language and "english" not in language.lower():
         body_text = gpt.translate(body_text, language)
 
     return {
