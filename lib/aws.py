@@ -4,8 +4,9 @@ import os
 from decimal import Decimal
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from dotenv import load_dotenv
-from elasticsearch import Elasticsearch, RequestsHttpConnection
-from requests_aws4auth import AWS4Auth
+
+# from elasticsearch import Elasticsearch, RequestsHttpConnection
+# from requests_aws4auth import AWS4Auth
 import boto3
 from boto3.dynamodb.conditions import Key
 from lib.gpt import summarize_with_gpt3_langchain
@@ -41,23 +42,23 @@ REGION = os.getenv("REGION")
 OPENSEARCH_HOST = get_opensearch_host("MyOpenSearchDomain")
 service = "es"
 credentials = boto3.Session().get_credentials()
-awsauth = AWS4Auth(
-    credentials.access_key,
-    credentials.secret_key,
-    REGION,
-    service,
-    session_token=credentials.token,
-)
+# awsauth = AWS4Auth(
+#     credentials.access_key,
+#     credentials.secret_key,
+#     REGION,
+#     service,
+#     session_token=credentials.token,
+# )
 
 this_logger.debug("OPENSEARCH_HOST: %s", OPENSEARCH_HOST)
 
-es = Elasticsearch(
-    hosts=[{"host": OPENSEARCH_HOST, "port": 443}],
-    http_auth=awsauth,
-    use_ssl=True,
-    verify_certs=True,
-    connection_class=RequestsHttpConnection,
-)
+# es = Elasticsearch(
+#     hosts=[{"host": OPENSEARCH_HOST, "port": 443}],
+#     http_auth=awsauth,
+#     use_ssl=True,
+#     verify_certs=True,
+#     connection_class=RequestsHttpConnection,
+# )
 
 if IS_OFFLINE:
     dynamodb = boto3.resource(
@@ -67,7 +68,7 @@ if IS_OFFLINE:
         aws_access_key_id="fakeMyKeyId",
         aws_secret_access_key="fakeSecretAccessKey",
     )
-    es = Elasticsearch(hosts=[{"host": "localhost", "port": 9200}], http_auth=awsauth)
+    # es = Elasticsearch(hosts=[{"host": "localhost", "port": 9200}], http_auth=awsauth)
 
 
 def vectorize(message: str):
@@ -184,12 +185,13 @@ def save_in_db(
     # Save as vector
     try:
         if to_vectorize and message_type == "user":
-            message_vector = vectorize(message)
-            es.index(
-                index="messages",
-                id=message_id,
-                body={"message": message, "vector": message_vector.tolist()},
-            )
+            this_logger.debug("Vectorizing message: %s", message)
+            # message_vector = vectorize(message)
+            # es.index(
+            #     index="messages",
+            #     id=message_id,
+            #     body={"message": message, "vector": message_vector.tolist()},
+            # )
     except Exception as e:
         this_logger.error("Error vectorizing message: %s", e)
         return False
@@ -229,12 +231,13 @@ def update_message(message, message_id):
 
     # Save as vector
     try:
-        message_vector = vectorize(message)
-        es.index(
-            index="messages",
-            id=message_id,
-            body={"message": message, "vector": message_vector.tolist()},
-        )
+        this_logger.debug("Vectorizing message: %s", message)
+        # message_vector = vectorize(message)
+        # es.index(
+        #     index="messages",
+        #     id=message_id,
+        #     body={"message": message, "vector": message_vector.tolist()},
+        # )
     except Exception as e:
         this_logger.error("Error vectorizing message: %s", e)
         return False
@@ -390,60 +393,60 @@ def add_user(phone_number):
         return False
 
 
-def check_for_simmilar_claims(message):
-    """Function to compare a claim vector with existing claim vectors"""
-    try:
-        # Convert claim into a vector
-        message_vector = vectorize(message.content)
+# def check_for_simmilar_claims(message):
+#     """Function to compare a claim vector with existing claim vectors"""
+#     try:
+#         # Convert claim into a vector
+#         message_vector = vectorize(message.content)
 
-        # Use OpenSearch's script_score function to compute the cosine similarity
-        query = {
-            "script_score": {
-                "query": {
-                    "bool": {
-                        "must": {"match_all": {}},
-                        "must_not": {"term": {"_id": message.id}},
-                    }
-                },
-                "script": {
-                    "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
-                    "params": {"query_vector": message_vector.tolist()},
-                },
-            }
-        }
-        response = es.search(index="messages", body={"query": query})
+#         # Use OpenSearch's script_score function to compute the cosine similarity
+#         query = {
+#             "script_score": {
+#                 "query": {
+#                     "bool": {
+#                         "must": {"match_all": {}},
+#                         "must_not": {"term": {"_id": message.id}},
+#                     }
+#                 },
+#                 "script": {
+#                     "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
+#                     "params": {"query_vector": message_vector.tolist()},
+#                 },
+#             }
+#         }
+#         response = es.search(index="messages", body={"query": query})
 
-        # If a similar message is found and its score is above the threshold, fetch the answer
-        similarity_threshold = 0.75
-        if response["hits"]["hits"]:
-            this_logger.debug("Simmilar claim was found!")
-            most_similar_message_score = response["hits"]["hits"][0]["_score"]
-            if most_similar_message_score >= similarity_threshold:
-                this_logger.info(
-                    "Simmilar claim was found: %s",
-                    response["hits"]["hits"][0]["_source"]["message"],
-                )
-                most_similar_message_id = response["hits"]["hits"][0]["_id"]
-                this_logger.debug(
-                    "most_similar_message_id: %s", most_similar_message_id
-                )
+#         # If a similar message is found and its score is above the threshold, fetch the answer
+#         similarity_threshold = 0.75
+#         if response["hits"]["hits"]:
+#             this_logger.debug("Simmilar claim was found!")
+#             most_similar_message_score = response["hits"]["hits"][0]["_score"]
+#             if most_similar_message_score >= similarity_threshold:
+#                 this_logger.info(
+#                     "Simmilar claim was found: %s",
+#                     response["hits"]["hits"][0]["_source"]["message"],
+#                 )
+#                 most_similar_message_id = response["hits"]["hits"][0]["_id"]
+#                 this_logger.debug(
+#                     "most_similar_message_id: %s", most_similar_message_id
+#                 )
 
-                # fetching fact check from dynamodb
-                response = sessionTable.get_item(
-                    Key={"message_id": f"{most_similar_message_id}_r"}
-                )
-                if "Item" in response:
-                    this_logger.info(
-                        "Fact check of message found: %s", response["Item"]
-                    )
-                    return {
-                        "claim_fact_check": response["Item"].message,
-                        "status": False,
-                    }
+#                 # fetching fact check from dynamodb
+#                 response = sessionTable.get_item(
+#                     Key={"message_id": f"{most_similar_message_id}_r"}
+#                 )
+#                 if "Item" in response:
+#                     this_logger.info(
+#                         "Fact check of message found: %s", response["Item"]
+#                     )
+#                     return {
+#                         "claim_fact_check": response["Item"].message,
+#                         "status": False,
+#                     }
 
-        this_logger.info("No simmilar claim was found")
-        return {"claim_fact_check": "No similar claim was found", "status": False}
+#         this_logger.info("No simmilar claim was found")
+#         return {"claim_fact_check": "No similar claim was found", "status": False}
 
-    except Exception as e:
-        this_logger.error("Error checking for simmilar claims: %s", e)
-        return {"claim_fact_check": "No similar claim was found", "status": False}
+#     except Exception as e:
+#         this_logger.error("Error checking for simmilar claims: %s", e)
+#         return {"claim_fact_check": "No similar claim was found", "status": False}

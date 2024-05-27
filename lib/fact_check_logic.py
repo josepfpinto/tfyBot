@@ -1,7 +1,7 @@
 """Main fact check logic"""
 
 import json
-from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
+from langchain_core.messages import AIMessage, SystemMessage
 from lib.whatsapp import whatsapp
 from lib import aws, utils, logger, gpt
 from lib.fact_check_graph.start import graph
@@ -35,14 +35,14 @@ def fact_check_message(number, message_id, media_id, timestamp, language=None):
     initial_state = construct_initial_state_with_history(chat_history, user_message)
 
     # Check if there are simmilar claims
-    simmilar_claims_result = aws.check_for_simmilar_claims(user_message)
-    if simmilar_claims_result["status"] == True:
-        return whatsapp.send_message(
-            number,
-            simmilar_claims_result["claim_fact_check"],
-            "interactive_main_menu",
-            language,
-        )
+    # simmilar_claims_result = aws.check_for_simmilar_claims(user_message)
+    # if simmilar_claims_result["status"] == True:
+    #     return whatsapp.send_message(
+    #         number,
+    #         simmilar_claims_result["claim_fact_check"],
+    #         "interactive_main_menu",
+    #         language,
+    #     )
 
     # Else, Fact Check message!
     response = graph.invoke(initial_state)
