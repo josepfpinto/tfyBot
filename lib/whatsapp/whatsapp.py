@@ -18,7 +18,7 @@ WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
 WHATSAPP_VERSION = os.getenv("WHATSAPP_VERSION")
 WHATSAPP_APP_ID = os.getenv("WHATSAPP_APP_ID")
 WHATSAPP_APP_SECRET = os.getenv("WHATSAPP_APP_SECRET")
-DEBUG = os.getenv("DEBUG")
+IS_DEBUG = os.getenv("IS_DEBUG") == "true"
 
 # 22-jul-2023 - WhatsApp supported types
 MEDIA_TYPES = {
@@ -128,7 +128,7 @@ def send_message(recipient, message, message_type="text", language=None):
         select_message_template(message_type, data, message, language)
         final_data = json.dumps(data)
 
-        if DEBUG != "True":
+        if not IS_DEBUG:
             this_logger.debug("\nSending message: %s to %s", final_data, whatsapp_url)
             response = requests.post(
                 whatsapp_url, headers=headers, data=final_data, timeout=20
