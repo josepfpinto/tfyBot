@@ -70,6 +70,11 @@ jobs:
     #     find unzipped -type f | wc -l
     #     rm -rf unzipped
 
+    - name: Get ECR URI
+      id: ecr
+      run: |
+        echo "::set-output name=uri::$(aws ecr describe-repositories --repository-names serverless-flask --query 'repositories[0].repositoryUri' --output text)"
+
     - name: Deploy with Serverless
       env:
         IS_OFFLINE: false
