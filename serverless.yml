@@ -131,8 +131,10 @@ resources:
               WriteCapacityUnits: 2
 
 package:
+  individually: true
   exclude:
     - .serverless/**
+    - src/python/**
   include:
     - .venv/lib/python3.8/site-packages/pydantic/**
     - .venv/lib/python3.8/site-packages/pydantic_core/**
