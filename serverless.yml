@@ -7,7 +7,7 @@ plugins:
   - serverless-wsgi
   - serverless-offline
   - serverless-dynamodb-local
-  # - serverless-dotenv-plugin
+  # - serverless-dotenv-plugin # Uncomment if you want to use dotenv on local deployment for example
 
 custom:
   usersTableName: "users-table-${self:provider.stage}"
