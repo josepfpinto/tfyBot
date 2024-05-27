@@ -53,9 +53,9 @@ jobs:
         npm install -g serverless
         npm install serverless-python-requirements
 
-    - name: Update function configuration
-      run: |
-        aws lambda update-function-configuration --function-name serverless-flask-dev-app --layers arn:aws:lambda:eu-west-1:${{ secrets.AWS_ACCOUNT_ID }}:layer:python-dependencies:1
+    # - name: Update function configuration
+    #   run: |
+    #     aws lambda update-function-configuration --function-name serverless-flask-dev-app --layers arn:aws:lambda:eu-west-1:${{ secrets.AWS_ACCOUNT_ID }}:layer:python-dependencies:1
 
     # - name: Package service
     #   run: npx serverless package
