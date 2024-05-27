@@ -42,13 +42,25 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: eu-west-1
 
+    - name: Create S3 bucket
+      run: |
+        aws s3api create-bucket --bucket tfy-deployment-bucket --region eu-west-1 --create-bucket-configuration LocationConstraint=eu-west-1
+
+    - name: Upload to S3
+      run: |
+        aws s3 cp python_dependencies.zip s3://tfy-deployment-bucket/python_dependencies.zip
+
     - name: Publish layer
       run: |
-        aws lambda publish-layer-version --layer-name python-dependencies --zip-file fileb://python_dependencies.zip
+        aws lambda publish-layer-version --layer-name python-dependencies --content S3Bucket=tfy-deployment-bucket,S3Key=python_dependencies.zip
 
     - name: Update function configuration
       run: |
         aws lambda update-function-configuration --function-name serverless-flask-dev-app --layers arn:aws:lambda:eu-west-1:${{ secrets.AWS_ACCOUNT_ID }}:layer:python-dependencies:1
+
+    - name: Delete S3 bucket
+      run: |
+        aws s3 rb s3://tfy-deployment-bucket --force
 
     # - name: Package service
     #   run: npx serverless package
