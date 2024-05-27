@@ -25,18 +25,43 @@ jobs:
         npm install -g serverless
         npm install serverless-python-requirements
 
-    - name: Package service
-      run: npx serverless package
-
-    - name: Check size of deployment package
-      run: du -sh .serverless/*
-
-    - name: Check size and number of files in unzipped deployment package
+    - name: Package dependencies
       run: |
-        unzip .serverless/serverless-flask.zip -d unzipped
-        du -sh unzipped
-        find unzipped -type f | wc -l
-        rm -rf unzipped
+        mkdir python
+        pipenv lock -r > requirements.txt
+        pip install -r requirements.txt --target python/
+
+    - name: Compress dependencies
+      run: |
+        zip -r python_dependencies.zip python/
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-1
+
+    - name: Publish layer
+      run: |
+        aws lambda publish-layer-version --layer-name python-dependencies --zip-file fileb://python_dependencies.zip
+
+    - name: Update function configuration
+      run: |
+        aws lambda update-function-configuration --function-name serverless-flask-dev-app --layers arn:aws:lambda:eu-west-1:${{ secrets.AWS_ACCOUNT_ID }}:layer:python-dependencies:1
+
+    # - name: Package service
+    #   run: npx serverless package
+
+    # - name: Check size of deployment package
+    #   run: du -sh .serverless/*
+
+    # - name: Check size and number of files in unzipped deployment package
+    #   run: |
+    #     unzip .serverless/serverless-flask.zip -d unzipped
+    #     du -sh unzipped
+    #     find unzipped -type f | wc -l
+    #     rm -rf unzipped
 
     - name: Deploy with Serverless
       env:
@@ -44,6 +69,7 @@ jobs:
         AWS_DEFAULT_REGION: 'eu-west-1'
         IS_DEBUG: ${{ env.IS_DEBUG }}
         SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
