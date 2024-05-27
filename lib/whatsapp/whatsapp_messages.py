@@ -98,12 +98,21 @@ def add_more_menu(language=None):
     }
 
 
-def select_message_template(message_type, data, message="", language=None):
+def select_message_template(
+    message_type, data, message="", source_language="english", target_language=None
+):
     """Select a template for the message"""
-    this_logger.info("\nSelecting message template in language %s", language)
+    this_logger.info("\nSelecting message template in language %s", target_language)
 
-    if language and message:
-        message = gpt.translate(message, language)
+    if (
+        target_language
+        and message
+        and source_language.lower() not in target_language.lower()
+    ):
+        this_logger.debug(
+            "\nTranslating from %s to %s", source_language, target_language
+        )
+        message = gpt.translate(message, target_language)
 
     if message_type == "text":
         this_logger.debug("Adding text message")
@@ -129,7 +138,7 @@ def select_message_template(message_type, data, message="", language=None):
         data.update(
             {
                 "type": "interactive",
-                "interactive": add_more_menu(language),
+                "interactive": add_more_menu(target_language),
             }
         )
     elif message_type == "interactive_welcome":
@@ -137,6 +146,6 @@ def select_message_template(message_type, data, message="", language=None):
         data.update(
             {
                 "type": "interactive",
-                "interactive": welcome_message(language),
+                "interactive": welcome_message(target_language),
             }
         )

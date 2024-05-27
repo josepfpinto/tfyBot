@@ -22,7 +22,14 @@ def construct_initial_state_with_history(chat_history, user_message):
     return initial_state
 
 
-def fact_check_message(number, message_id, media_id, timestamp, language=None):
+def fact_check_message(
+    number,
+    message_id,
+    media_id,
+    timestamp,
+    source_language="english",
+    target_language=None,
+):
     """function that process"""
     this_logger.info("\nFact check message...")
     # Confirm if new message has arrived
@@ -63,6 +70,10 @@ def fact_check_message(number, message_id, media_id, timestamp, language=None):
         if aws.save_in_db(sumup, number, f"{user_message.id}_s", "sumup"):
             # Send message to user
             return whatsapp.send_message(
-                number, final_message_content, "interactive_main_menu", language
+                number,
+                final_message_content,
+                "interactive_main_menu",
+                source_language,
+                target_language,
             )
     return utils.create_api_response(400, "Failed to save messages to db")
