@@ -98,7 +98,7 @@ def summarize(text, char_limit=utils.SUMUP_CHAR_LIMMIT):
     """
     Translate a claim using LangChain with an OpenAI model. Output: {summarized_message: string}
     """
-    this_logger.info("\Summarizing messages...")
+    this_logger.info("\nSummarizing messages...")
 
     messages_template = ChatPromptTemplate.from_messages(
         [
