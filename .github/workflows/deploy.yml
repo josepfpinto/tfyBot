@@ -24,6 +24,12 @@ jobs:
         npm install -g serverless
         npm install serverless-python-requirements
 
+    - name: Package service
+      run: npx serverless package
+
+    - name: Check size of deployment package
+      run: du -sh .serverless/*
+
     - name: Deploy with Serverless
       env:
         IS_OFFLINE: false

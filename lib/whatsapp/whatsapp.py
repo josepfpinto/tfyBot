@@ -114,18 +114,24 @@ def send_template_message(recipient, template="hello_world"):
         return e, 403
 
 
-def send_message(recipient, message, message_type="text", language=None):
+def send_message(
+    recipient,
+    message,
+    message_type="text",
+    source_language="english",
+    target_language=None,
+):
     """send message to Whatsapp"""
-    this_logger.info(
-        "\nSend Message: %s IN %s", message, language if language else "english"
-    )
+    this_logger.info("\nSend Message...")
     try:
         data = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
             "to": recipient,
         }
-        select_message_template(message_type, data, message, language)
+        select_message_template(
+            message_type, data, message, source_language, target_language
+        )
         final_data = json.dumps(data)
 
         if not IS_DEBUG:
