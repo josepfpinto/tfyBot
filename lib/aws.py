@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # from requests_aws4auth import AWS4Auth
 import boto3
 from boto3.dynamodb.conditions import Key
-from lib.gpt import summarize_with_gpt3_langchain
+from lib.gpt import summarize
 from lib import utils, logger
 from langchain_openai import OpenAIEmbeddings
 
@@ -147,9 +147,7 @@ def get_chat_history(session_id):
         # Check if the total character count exceeds the limit
         if total_chars > utils.HISTORY_CHAR_LIMMIT:
             original_messages = utils.message_to_dict(messages)
-            summary = summarize_with_gpt3_langchain(
-                "; ".join(original_messages), utils.HISTORY_CHAR_LIMMIT
-            )
+            summary = summarize("; ".join(original_messages), utils.HISTORY_CHAR_LIMMIT)
             formatted_history = [SystemMessage(content=summary, name="System")]
 
         this_logger.debug("formatted_history %s", formatted_history)

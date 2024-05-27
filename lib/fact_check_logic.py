@@ -56,9 +56,7 @@ def fact_check_message(number, message_id, media_id, timestamp, language=None):
         ] + chat_history
         this_logger.debug("\nchat_history: %s", chat_history)
         chat_history = utils.langchain_message_to_dict(chat_history)
-        sumup = gpt.summarize_with_gpt3_langchain(json.dumps(chat_history)).get(
-            "summarized_message"
-        )
+        sumup = gpt.summarize(json.dumps(chat_history)).get("summarized_message")
         if sumup is None:
             this_logger.debug("sumup is None")
             return utils.create_api_response(400, "Failed to create sumup")
