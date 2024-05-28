@@ -42,7 +42,7 @@ jobs:
       continue-on-error: true
 
     - name: Check Docker build and push output
-      run: echo "Docker build and push output: ${{ steps.docker-build.outputs }}"
+      run: echo "Docker build image output: ${{ steps.docker-build.outputs.image }}"
 
     - name: Check image availability
       run: |
