@@ -74,13 +74,15 @@ provider:
       Action:
         - dynamodb:Query
       Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.sessionsTableName}/index/SessionIdTimestampIndex"
+  ecr:
+    images:
+      appimage:
+        path: ./
 
 functions:
   appTFY:
     image:
-      # name: serverless-flask
-      uri: ${env:ECR_URI}
-    # handler: wsgi_handler.handler
+      name: appimag
     timeout: 300 # set the timeout to 300 seconds
     events:
       - http: ANY /

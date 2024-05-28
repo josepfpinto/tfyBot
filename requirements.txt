@@ -59,3 +59,4 @@ typing-inspect==0.9.0
 urllib3==2.2.1; python_version >= '3.10'
 werkzeug==3.0.2; python_version >= '3.8'
 yarl==1.9.4; python_version >= '3.7'
+serverless-wsgi==3.0.4; python_version >= '3.6'
