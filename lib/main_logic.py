@@ -96,7 +96,7 @@ def handle_text_message(number, message, language, message_id, timestamp):
 
 
 def handle_interactive_message(
-    number, interaction_id, message, message_id, media_id, timestamp, language
+    number, interaction_id, message, message_id, media_id, timestamp, target_language
 ):
     """Handles processing of interactive messages."""
     this_logger.info("\nProcessing interactive message.")
@@ -115,7 +115,7 @@ def handle_interactive_message(
                 "Ok then! Send your message and I’ll do my best to fact-check it. 😊",
                 "text",
                 "english",
-                language,
+                target_language,
             )
         return utils.create_api_response(400, "Failed to save system message to db")
 
@@ -127,7 +127,7 @@ def handle_interactive_message(
             chat_history = aws.get_chat_history(number)
             if aws.wait_for_next_message(chat_history):
                 return whatsapp.send_message(
-                    number, "Ok, I’ll wait.", "text", "english", language
+                    number, "Ok, I’ll wait.", "text", "english", target_language
                 )
             else:
                 return whatsapp.send_message(
@@ -135,7 +135,7 @@ def handle_interactive_message(
                     "Sorry, won't allow the continuation of factcheck",
                     "interactive_main_menu",
                     "english",
-                    language,
+                    target_language,
                 )
         return utils.create_api_response(400, "Failed to save system message to db")
 
@@ -145,8 +145,8 @@ def handle_interactive_message(
         ):
             this_logger.debug("Saved in DB")
             return fact_check_message(
-                number, message_id, media_id, timestamp, "english", language
-            )  # TODO: SOURCE LANGUAGE!
+                number, message_id, media_id, timestamp, target_language
+            )
         return utils.create_api_response(400, "Failed to save system message to db")
 
     elif interaction_id == "buttoncancel":
@@ -157,7 +157,7 @@ def handle_interactive_message(
                 "Ok. Anything else?",
                 "interactive_main_menu",
                 "english",
-                language,
+                target_language,
             )
         return utils.create_api_response(400, "Failed to save system message to db")
 
@@ -168,12 +168,16 @@ def handle_interactive_message(
             this_logger.debug("Saved in DB")
             language_msg = (
                 f"""At the moment your preferred language is {
-            language}. Please write your new preferred language."""
-                if language
+            target_language}. Please write your new preferred language."""
+                if target_language
                 else "You don't have a preferred language. If you want, please write your preferred language."
             )
             return whatsapp.send_message(
-                number, language_msg, "interactive_main_menu", "english", language
+                number,
+                language_msg,
+                "interactive_main_menu",
+                "english",
+                target_language,
             )
         return utils.create_api_response(400, "Failed to save system message to db")
 

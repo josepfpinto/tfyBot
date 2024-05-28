@@ -27,7 +27,7 @@ def fact_check_message(
     message_id,
     media_id,
     timestamp,
-    source_language="english",
+    # source_language="english",
     target_language=None,
 ):
     """function that process"""
@@ -73,7 +73,7 @@ def fact_check_message(
                 number,
                 final_message_content,
                 "interactive_main_menu",
-                source_language,
+                "english",  # TODO: LOGIC FOR SOURCE LANGUAGE
                 target_language,
             )
     return utils.create_api_response(400, "Failed to save messages to db")
