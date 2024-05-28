@@ -82,7 +82,7 @@ provider:
 functions:
   appTFY:
     image:
-      name: appimag
+      name: appimage
     timeout: 300 # set the timeout to 300 seconds
     events:
       - http: ANY /
