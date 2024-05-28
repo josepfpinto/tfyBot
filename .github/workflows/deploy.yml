@@ -39,6 +39,17 @@ jobs:
         context: .
         push: true
         tags: ${{ steps.login-ecr.outputs.registry }}/serverless-flask:latest
+      continue-on-error: true
+
+    - name: Check Docker build and push output
+      run: echo "Docker build and push output: ${{ steps.docker-build.outputs }}"
+
+    - name: Check image availability
+      run: |
+        until aws ecr describe-images --repository-name serverless-flask --image-ids imageTag=latest; do
+          echo "Image not yet available, retrying in 10 seconds..."
+          sleep 10
+        done
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -53,26 +64,12 @@ jobs:
         npm install -g serverless
         npm install serverless-python-requirements
 
-    # - name: Update function configuration
-    #   run: |
-    #     aws lambda update-function-configuration --function-name serverless-flask-dev-app --layers arn:aws:lambda:eu-west-1:${{ secrets.AWS_ACCOUNT_ID }}:layer:python-dependencies:1
-
-    # - name: Package service
-    #   run: npx serverless package
-
-    # - name: Check size of deployment package
-    #   run: du -sh .serverless/*
-
-    # - name: Check size and number of files in unzipped deployment package
-    #   run: |
-    #     unzip .serverless/serverless-flask.zip -d unzipped
-    #     du -sh unzipped
-    #     find unzipped -type f | wc -l
-    #     rm -rf unzipped
-
     - name: Get ECR URI
       id: ecr
-      run: echo "ECR_URI=$(aws ecr describe-repositories --repository-names serverless-flask --query 'repositories[0].repositoryUri' --output text)" >> $GITHUB_ENV
+      run: echo "ECR_URI=$(aws ecr describe-repositories --repository-names serverless-flask --query 'repositories[0].repositoryUri' --output text):latest" >> $GITHUB_ENV
+
+    - name: Check ECR_URI
+      run: echo "ECR_URI: $ECR_URI"
 
     - name: Deploy with Serverless
       env:
