@@ -31,15 +31,15 @@ sessionTable = dynamodb.Table(SESSIONS_TABLE)
 usersTable = dynamodb.Table(USERS_TABLE)
 
 
-def get_opensearch_host(domain_name):
-    client = boto3.client("es")
-    response = client.describe_elasticsearch_domain(DomainName=domain_name)
-    return response["DomainStatus"]["Endpoint"]
+# def get_opensearch_host(domain_name):
+#     client = boto3.client("es")
+#     response = client.describe_elasticsearch_domain(DomainName=domain_name)
+#     return response["DomainStatus"]["Endpoint"]
 
 
 # Create a new AWS4Auth object
 REGION = os.getenv("REGION")
-OPENSEARCH_HOST = get_opensearch_host("MyOpenSearchDomain")
+# OPENSEARCH_HOST = get_opensearch_host("MyOpenSearchDomain")
 service = "es"
 credentials = boto3.Session().get_credentials()
 # awsauth = AWS4Auth(
@@ -50,7 +50,7 @@ credentials = boto3.Session().get_credentials()
 #     session_token=credentials.token,
 # )
 
-this_logger.debug("OPENSEARCH_HOST: %s", OPENSEARCH_HOST)
+# this_logger.debug("OPENSEARCH_HOST: %s", OPENSEARCH_HOST)
 
 # es = Elasticsearch(
 #     hosts=[{"host": OPENSEARCH_HOST, "port": 443}],
