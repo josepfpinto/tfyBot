@@ -76,7 +76,7 @@ provider:
       Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.sessionsTableName}/index/SessionIdTimestampIndex"
 
 functions:
-  app:
+  appTFY:
     image:
       # name: serverless-flask
       uri: ${env:ECR_URI}
