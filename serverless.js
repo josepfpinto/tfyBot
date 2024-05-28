@@ -184,7 +184,7 @@ const serverlessConfiguration = {
   },
 };
 
-if (process.env.IS_OFFLINE) {
+if (process.env.IS_OFFLINE && process.env.IS_OFFLINE !== 'false') {
   console.log("I'm OFFLINE")
   serverlessConfiguration.plugins = [
     'serverless-python-requirements',

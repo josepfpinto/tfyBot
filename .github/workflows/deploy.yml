@@ -34,7 +34,7 @@ jobs:
 
     - name: Deploy with Serverless
       env:
-        IS_OFFLINE: false
+        IS_OFFLINE: 'false'
         AWS_DEFAULT_REGION: 'eu-west-1'
         IS_DEBUG: ${{ env.IS_DEBUG }}
         SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
