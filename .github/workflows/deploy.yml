@@ -65,9 +65,6 @@ jobs:
       id: ecr
       run: echo "ECR_URI=$(aws ecr describe-repositories --repository-names serverless-flask --query 'repositories[0].repositoryUri' --output text):latest" >> $GITHUB_ENV
 
-    - name: Check ECR_URI
-      run: echo "ECR_URI: $ECR_URI"
-
     - name: Deploy with Serverless
       env:
         IS_OFFLINE: false
