@@ -12,41 +12,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4  # Checks-out the repository
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: eu-west-1
-
-    - name: Create ECR repository if it doesn't exist
-      run: |
-        aws ecr describe-repositories --repository-names serverless-flask || aws ecr create-repository --repository-name serverless-flask
-
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
-      with:
-        mask-aws-account-id: true
-
-    - name: Build and push
-      id: docker-build
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        push: true
-        tags: ${{ steps.login-ecr.outputs.registry }}/serverless-flask:latest
-      continue-on-error: true
-
-    - name: Check image availability
-      run: |
-        until aws ecr describe-images --repository-name serverless-flask --image-ids imageTag=latest; do
-          echo "Image not yet available, retrying in 10 seconds..."
-          sleep 10
-        done
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -60,10 +31,6 @@ jobs:
         rm -rf node_modules package-lock.json
         npm install -g serverless
         npm install serverless-python-requirements
-
-    - name: Get ECR URI
-      id: ecr
-      run: echo "ECR_URI=$(aws ecr describe-repositories --repository-names serverless-flask --query 'repositories[0].repositoryUri' --output text):latest" >> $GITHUB_ENV
 
     - name: Deploy with Serverless
       env:

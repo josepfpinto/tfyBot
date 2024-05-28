@@ -1,10 +1,9 @@
-# syntax=docker/dockerfile:1
-
 FROM public.ecr.aws/lambda/python:3.11
 
-COPY . .
+COPY . ${LAMBDA_TASK_ROOT}
 
-RUN pip install -r requirements.txt gunicorn
+COPY requirements.txt  .
 
+RUN pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 
-CMD ["gunicorn", "-b", ":8000", "app:app"]
+CMD ["app.handler"]
