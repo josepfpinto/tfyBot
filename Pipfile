@@ -13,6 +13,7 @@ langchain-openai = "*"
 langchain = "*"
 beautifulsoup4 = "*"
 serverless-wsgi = "*"
+langchain-community = "*"
 
 [dev-packages]
 

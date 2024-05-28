@@ -9,7 +9,7 @@
     "es-define-property": "^1.0.0",
     "serverless-dotenv-plugin": "^6.0.0",
     "serverless-dynamodb-local": "^0.2.40",
-    "serverless-offline": "^13.3.3",
+    "serverless-offline": "^13.6.0",
     "serverless-python-requirements": "^6.1.0",
     "serverless-wsgi": "^3.0.3"
   }
