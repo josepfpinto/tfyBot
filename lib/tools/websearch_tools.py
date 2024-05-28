@@ -1,37 +1,42 @@
 """Websearch tools available"""
+
 import os
 from dotenv import load_dotenv
 import requests
-from langchain.tools.tavily_search import TavilySearchResults
-from langchain.utilities.google_serper import GoogleSerperAPIWrapper
-from langchain.utilities.tavily_search import TavilySearchAPIWrapper
+
+# Old imports
+# from langchain.tools.tavily_search import TavilySearchResults
+# from langchain.utilities.google_serper import GoogleSerperAPIWrapper
+# from langchain.utilities.tavily_search import TavilySearchAPIWrapper
+from langchain_community.tools.tavily_search.tool import TavilySearchResults
+from langchain_community.utilities import GoogleSerperAPIWrapper
+from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
+from langchain_community.tools.brave_search.tool import BraveSearch
 from langchain.agents.tools import Tool
 from langchain.tools import tool
-from langchain_community.tools.brave_search.tool import BraveSearch
 from bs4 import BeautifulSoup
 from lib import logger
 from lib.tools.compressor import ContextCompressor
-#from gpt_researcher import GPTResearcher
+
+# from gpt_researcher import GPTResearcher
 from langchain_openai import OpenAIEmbeddings
 
-this_logger = logger.configure_logging('WEBSEARCH_TOOLS')
+this_logger = logger.configure_logging("WEBSEARCH_TOOLS")
 
 # Load environment variables
 load_dotenv()
-TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
-SERPER_API_KEY = os.getenv('SERPER_API_KEY')
-BRAVE_API_KEY = os.getenv('BRAVE_API_KEY')
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+SERPER_API_KEY = os.getenv("SERPER_API_KEY")
+BRAVE_API_KEY = os.getenv("BRAVE_API_KEY")
 
 # List of tools
-tavily_tool = TavilySearchResults(
-    api_wrapper=TavilySearchAPIWrapper(), max_results=1)
+tavily_tool = TavilySearchResults(api_wrapper=TavilySearchAPIWrapper(), max_results=1)
 search_serper = Tool(
     name="Google Search",
     func=GoogleSerperAPIWrapper(serper_api_key=SERPER_API_KEY, k=3).results,
     description="Access to google search. Use this to obtain information about current events, to find support links, or to get info on how to write code.",
 )
-web_search = BraveSearch.from_api_key(
-    api_key=BRAVE_API_KEY, search_kwargs={"count": 3})
+web_search = BraveSearch.from_api_key(api_key=BRAVE_API_KEY, search_kwargs={"count": 3})
 
 
 def get_content_from_url(soup):
@@ -51,13 +56,13 @@ def get_content_from_url(soup):
 
 
 @tool("process_content", return_direct=False)
-def process_content(url: str, user_claim:str) -> str:
+def process_content(url: str, user_claim: str) -> str:
     """Processes content from a webpage with a html.parser"""
     try:
         this_logger.info("Processing content from %s", url)
         response = requests.get(url, timeout=15)
         soup = BeautifulSoup(
-            response.content, 'lxml', from_encoding=response.encoding # "html.parser"
+            response.content, "lxml", from_encoding=response.encoding  # "html.parser"
         )
         this_logger.debug("Ready to extract")
 
@@ -71,7 +76,9 @@ def process_content(url: str, user_claim:str) -> str:
 
         # Summarize Raw Data
         this_logger.debug("Starting to compress content...")
-        context_compressor = ContextCompressor(documents=[{'raw_content': content}], embeddings=OpenAIEmbeddings())
+        context_compressor = ContextCompressor(
+            documents=[{"raw_content": content}], embeddings=OpenAIEmbeddings()
+        )
 
         # Run Tasks
         this_logger.debug("Fetching info based on user claim: %s", user_claim)

@@ -13,6 +13,7 @@ this_logger = logger.configure_logging("APP")
 app = Flask(__name__)
 app.register_blueprint(webhook_blueprint)
 
+
 if __name__ == "__main__":
     this_logger.info("Flask app started")
     # app.run(host="0.0.0.0", port=8080)

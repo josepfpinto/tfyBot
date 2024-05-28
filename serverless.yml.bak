@@ -4,10 +4,10 @@ service: serverless-flask
 
 plugins:
   - serverless-python-requirements
-  # - serverless-wsgi
+  - serverless-wsgi # ONLY FOR LOCAL DEV
   - serverless-offline
   - serverless-dynamodb-local
-  # - serverless-dotenv-plugin # Uncomment if you want to use dotenv on local deployment for example
+  # - serverless-dotenv-plugin # Uncomment if you want to use dotenv
 
 custom:
   usersTableName: "users-table-${self:provider.stage}"
@@ -19,11 +19,11 @@ custom:
     dockerizePip: false
     usePipenv: true
   dynamodb:
-    # stages:
-    #   - dev
+    # stages: # ONLY FOR LOCAL DEV
+    #   - dev # ONLY FOR LOCAL DEV
     start:
-      # port: 8000
-      # inMemory: true
+      # port: 8000# ONLY FOR LOCAL DEV
+      # inMemory: true # ONLY FOR LOCAL DEV
       migrate: true # Automatically create/migrate tables on start
   serverless-offline:
     noPrependStageInUrl: true
@@ -50,6 +50,7 @@ provider:
     WHATSAPP_VERSION: ${env:WHATSAPP_VERSION, ''}
     WHATSAPP_VERIFY_TOKEN: ${env:WHATSAPP_VERIFY_TOKEN, ''}
     IS_DEBUG: ${env:IS_DEBUG, ''}
+    IS_OFFLINE: ${env:IS_OFFLINE, ''}
     LANGCHAIN_TRACING_V2: ${env:LANGCHAIN_TRACING_V2, ''}
     LANGCHAIN_API_KEY: ${env:LANGCHAIN_API_KEY, ''}
     LANGCHAIN_PROJECT: ${env:LANGCHAIN_PROJECT, ''}
