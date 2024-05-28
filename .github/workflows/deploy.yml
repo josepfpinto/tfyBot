@@ -72,8 +72,7 @@ jobs:
 
     - name: Get ECR URI
       id: ecr
-      run: |
-        echo "::set-output name=uri::$(aws ecr describe-repositories --repository-names serverless-flask --query 'repositories[0].repositoryUri' --output text)"
+      run: echo "ECR_URI=$(aws ecr describe-repositories --repository-names serverless-flask --query 'repositories[0].repositoryUri' --output text)" >> $GITHUB_ENV
 
     - name: Deploy with Serverless
       env:

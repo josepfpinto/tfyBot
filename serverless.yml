@@ -78,8 +78,8 @@ provider:
 functions:
   app:
     image:
-      name: serverless-flask
-      uri: ${{ steps.ecr.outputs.uri }}
+      # name: serverless-flask
+      uri: ${env:ECR_URI}
     # handler: wsgi_handler.handler
     timeout: 300 # set the timeout to 300 seconds
     events:
