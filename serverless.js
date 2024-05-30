@@ -57,8 +57,8 @@ const serverlessConfiguration = {
       LANGCHAIN_PROJECT: process.env.LANGCHAIN_PROJECT || '',
       LANGCHAIN_ENDPOINT: process.env.LANGCHAIN_ENDPOINT || '',
       REGION: process.env.REGION || '',
-      USERS_TABLE: process.env.USERS_TABLE || '',
-      SESSIONS_TABLE: process.env.SESSIONS_TABLE || '',
+      USERS_TABLE: usersTableName,
+      SESSIONS_TABLE: sessionsTableName,
     },
     iamRoleStatements: [
       {
