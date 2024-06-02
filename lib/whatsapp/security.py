@@ -24,9 +24,9 @@ def validate_signature(payload, signature):
         msg=payload.encode("utf-8"),
         digestmod=hashlib.sha256,
     ).hexdigest()
-    this_logger.debug("Incoming payload:", payload)
+    this_logger.debug("Incoming payload: %s", payload)
     this_logger.debug("secret: %s", WHATSAPP_APP_SECRET)
-    this_logger.debug("Signatures match:", signature == expected_signature)
+    this_logger.debug("Signatures match: %s", signature == expected_signature)
     this_logger.debug(
         "Comparing incoming sigature: %s | WITH computed one: %s",
         signature,
