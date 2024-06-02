@@ -21,8 +21,6 @@ USERS_TABLE = os.getenv("USERS_TABLE")
 SESSIONS_TABLE = os.getenv("SESSIONS_TABLE")
 IS_OFFLINE = os.getenv("IS_OFFLINE") == "true"
 REGION = os.getenv("REGION")
-this_logger.debug("USERS_TABLE: %s", USERS_TABLE)
-this_logger.debug("SESSIONS_TABLE: %s", SESSIONS_TABLE)
 
 # DYNAMODB TABLES
 # UsersTable (phone_number:key-string, language:string)
@@ -166,7 +164,6 @@ def is_repeted_message(message_id):
     """Checks if message_id exists in SessionTable."""
     this_logger.info("is_repeted_message: %s", message_id)
     try:
-        this_logger.debug("sessionTable: %s", sessionTable)
         response = sessionTable.get_item(Key={"message_id": message_id})
         this_logger.debug("response %s", response)
         return "Item" in response

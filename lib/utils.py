@@ -170,6 +170,13 @@ def create_api_response(status, message):
     return jsonify({"status": status_str, "message": message}), status
 
 
+def create_api_response_for_test(status, message):
+    """Function to create API response - {status: string, message: string}, status: int"""
+    status_str = "ok" if status == 200 else "error"
+    response = json.dumps({"status": status_str, "message": message})
+    return response, status
+
+
 def get_dynamic_max_tokens(max_tokens, messages):
     """Function to calculate max tokens based on messages length"""
     if max_tokens == 0:

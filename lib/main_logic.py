@@ -184,7 +184,7 @@ def handle_interactive_message(
     # elif interaction_id == "moreinfo": TODO...
     else:
         return utils.create_api_response(
-            400, f"Failed to identify interactive type: {message}"
+            400, f"Failed to identify interactive type: {interaction_id} - {message}"
         )
 
 
