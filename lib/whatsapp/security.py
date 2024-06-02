@@ -1,8 +1,10 @@
+"""Security module for WhatsApp API"""
+
+import hashlib
+import hmac
 import os
 from functools import wraps
 from flask import jsonify, request
-import hashlib
-import hmac
 from dotenv import load_dotenv
 from lib import logger
 
@@ -24,14 +26,6 @@ def validate_signature(payload, signature):
         msg=payload.encode("utf-8"),
         digestmod=hashlib.sha256,
     ).hexdigest()
-    this_logger.debug("Incoming payload: %s", payload)
-    this_logger.debug("secret: %s", WHATSAPP_APP_SECRET)
-    this_logger.debug("Signatures match: %s", signature == expected_signature)
-    this_logger.debug(
-        "Comparing incoming sigature: %s | WITH computed one: %s",
-        signature,
-        expected_signature,
-    )
 
     # Check if the signature matches
     return hmac.compare_digest(expected_signature, signature)

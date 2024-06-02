@@ -1,6 +1,7 @@
 """Backend request for testing"""
 
 from enum import Enum
+import urllib.parse
 import json
 import base64
 import copy
@@ -123,11 +124,9 @@ def get_request_types(timestamp, req_id, message):
 
 def compute_signature(payload):
     """Compute the signature for a given body and secret"""
-    # payload_bytes = bytes(json.dumps(payload), "utf-8")
-    payload_json = json.dumps(payload, sort_keys=True)
     hash_object = hmac.new(
         bytes(WHATSAPP_APP_SECRET, "latin-1"),
-        msg=payload_json.encode("utf-8"),
+        msg=payload.encode("utf-8"),
         digestmod=hashlib.sha256,
     )
     return "sha256=" + hash_object.hexdigest()
@@ -152,21 +151,20 @@ def simmulate_message(
     url = (LOCAL_URL if IS_OFFLINE else REMOTE_URL) + behaviour["url"]
     request_type = behaviour["type"]
     payload = behaviour["body"]
-    this_logger.debug("Payload: %s", payload)
-    signature = compute_signature(payload)
+    payload_json = json.dumps(payload, sort_keys=True)
+    signature = compute_signature(payload_json)
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {WHATSAPP_TOKEN}",
     }
     if request_type == "POST":
         headers["X-Hub-Signature-256"] = signature
+    this_logger.debug("Payload: %s", payload)
     this_logger.debug("Headers: %s", headers)
-    this_logger.debug("URL: %s", url)
-    this_logger.debug("request_type: %s", request_type)
 
     try:
         response = requests.request(
-            request_type, url, headers=headers, data=payload, timeout=30
+            request_type, url, headers=headers, data=payload_json, timeout=30
         )
         this_logger.debug("Response: %s", str(response))
         return utils.create_api_response_for_test(200, str(response.text))
