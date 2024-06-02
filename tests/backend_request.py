@@ -1,7 +1,7 @@
 """Backend request for testing"""
 
+from datetime import datetime
 from enum import Enum
-import urllib.parse
 import json
 import base64
 import copy
@@ -146,7 +146,7 @@ def simmulate_message(
     req_id=generate_random_id(),
 ):
     """Send a message to the backend for testing"""
-    timestamp = utils.get_timestamp()
+    timestamp = int(datetime.now().timestamp())
     behaviour = get_request_types(timestamp, req_id, message)[req_type]
     url = (LOCAL_URL if IS_OFFLINE else REMOTE_URL) + behaviour["url"]
     request_type = behaviour["type"]
