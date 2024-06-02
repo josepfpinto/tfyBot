@@ -1,6 +1,7 @@
 """Backend request for testing"""
 
 from enum import Enum
+import urllib.parse
 import json
 import base64
 import copy

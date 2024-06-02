@@ -24,9 +24,13 @@ def validate_signature(payload, signature):
         msg=payload.encode("utf-8"),
         digestmod=hashlib.sha256,
     ).hexdigest()
-
+    this_logger.debug("Incoming payload:", payload)
+    this_logger.debug("secret: %s", WHATSAPP_APP_SECRET)
+    this_logger.debug("Signatures match:", signature == expected_signature)
     this_logger.debug(
-        "Comparing incoming sigature: %s | WITH: %s", signature, expected_signature
+        "Comparing incoming sigature: %s | WITH computed one: %s",
+        signature,
+        expected_signature,
     )
 
     # Check if the signature matches
@@ -43,7 +47,6 @@ def signature_required(f):
         signature = request.headers.get("X-Hub-Signature-256", "")[
             7:
         ]  # Removing 'sha256='
-        this_logger.debug("Incoming payload: %s", request.data)
 
         if not validate_signature(request.data.decode("utf-8"), signature):
             this_logger.info("Signature verification failed!")
