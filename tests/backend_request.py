@@ -25,6 +25,9 @@ WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
 WHATSAPP_BUSINESS_ACCOUNT_ID = os.getenv("WHATSAPP_BUSINESS_ACCOUNT_ID")
 WHATSAPP_TEST_NUMBER = os.getenv("WHATSAPP_TEST_NUMBER")
 
+print("-------")
+print("IS_OFFLINE: ", IS_OFFLINE)
+
 
 class RequestTypes(Enum):
     """Request types"""

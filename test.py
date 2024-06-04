@@ -16,7 +16,7 @@ from tests import test_functions
 # -------------
 # Test via requests that simmulates the WhatsApp API
 # test_functions.test_welcome_message() # OK - 2022-03-02
-test_functions.test_greeting_message()
+test_functions.test_greeting_message()  # OK - 2022-03-04
 # test_functions.test_changing_language("Spanish")
 
 # TODO:

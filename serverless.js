@@ -1,4 +1,5 @@
 // serverless.js
+require('dotenv').config();
 
 const stage = 'dev';
 const region = 'eu-west-1';

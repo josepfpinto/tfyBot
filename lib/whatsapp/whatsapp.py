@@ -134,13 +134,15 @@ def send_message(
         )
         final_data = json.dumps(data)
 
-        if not IS_DEBUG:
+        if IS_DEBUG:
+            this_logger.debug("\nJust debugging: %s", final_data)
+            response = requests.Response()
+            response.status_code = 200
+        else:
             this_logger.debug("\nSending message: %s to %s", final_data, whatsapp_url)
             response = requests.post(
                 whatsapp_url, headers=headers, data=final_data, timeout=20
             )
-        else:
-            this_logger.debug("\nJust debugging: %s", final_data)
 
         return utils.create_api_response(
             response.status_code,
