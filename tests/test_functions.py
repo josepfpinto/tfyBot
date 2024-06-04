@@ -122,3 +122,9 @@ def test_greeting_message():
     """Test greeting user message"""
     this_logger.debug("starting test_greeting_message")
     this_logger.info(simmulate_message(RequestTypes.TEXT, "Hi!"))
+
+
+def test_changing_language(language="Spanish"):
+    """Test changing language"""
+    this_logger.debug("starting test_changing_language")
+    this_logger.info(simmulate_message(RequestTypes.TEXT, language))
